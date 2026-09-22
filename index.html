@@ -1187,17 +1187,20 @@
               </p>
             </div>
             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-              <button class="btn-excel-admin" onclick="exportarCSV()">
+              <button class="btn-excel-admin" onclick="exportarExcelConFirmas()" title="Descarga el padrón en formato Excel con firmas digitales visibles en cada celda">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
-                Descargar Excel / CSV
+                📊 Descargar Excel con Firmas (.xls)
               </button>
-              <button class="btn-secondary" onclick="exportarJSON()">
+              <button class="btn-generate-minuta" onclick="descargarMinutaWord()" title="Genera y descarga directamente la Minuta Oficial en Microsoft Word (.doc) con firmas estampadas">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+                📝 Descargar Minuta Word (.doc)
+              </button>
+              <button class="btn-secondary" onclick="exportarJSON()" title="Descarga los datos en formato JSON para procesamiento técnico">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
                 Exportar JSON
               </button>
-              <button class="btn-generate-minuta" onclick="descargarPaqueteMinuta()">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
-                Compilar Minuta MC
+              <button class="btn-secondary" onclick="exportarCSV()" title="Descarga el padrón en formato CSV texto plano">
+                CSV Texto
               </button>
             </div>
           </div>
@@ -1675,7 +1678,251 @@
       }[m]));
     }
 
-    // EXPORTACIONES PROTEGIDAS PARA EL ADMINISTRADOR
+    // EXPORTACIÓN EXCEL CON FIRMAS DIGITALES VISIBLES (.XLS)
+    function exportarExcelConFirmas() {
+      if (!isAdminAuthed) {
+        abrirModalAdmin(() => exportarExcelConFirmas());
+        return;
+      }
+      if (asistentes.length === 0) {
+        alert("No hay asistentes registrados para exportar.");
+        return;
+      }
+
+      let rowsHtml = '';
+      asistentes.forEach((a, i) => {
+        const u = escapeHtml(a.unidad || 'Coordinación de Competitividad');
+        const imgFirma = (a.firma && a.firma.startsWith('data:image')) 
+          ? `<img src="${a.firma}" width="140" height="55" style="display:block; margin:auto;" />` 
+          : '<span style="color:#888;">Sin firma</span>';
+
+        rowsHtml += `
+          <tr style="height: 62px; vertical-align: middle;">
+            <td style="border: 1px solid #b2c9bd; text-align: center; font-weight: bold; background-color: #f7faf8;">${i + 1}</td>
+            <td style="border: 1px solid #b2c9bd; font-weight: bold; color: #1a1a1a;">${escapeHtml(a.nombre)}</td>
+            <td style="border: 1px solid #b2c9bd; color: #006341; font-weight: 600;">${u}</td>
+            <td style="border: 1px solid #b2c9bd;">${escapeHtml(a.cargo)}</td>
+            <td style="border: 1px solid #b2c9bd; text-align: center; mso-number-format:'\\@'; font-family: monospace;">${escapeHtml(a.matricula)}</td>
+            <td style="border: 1px solid #b2c9bd; text-align: center; background-color: #ffffff; padding: 4px;">${imgFirma}</td>
+            <td style="border: 1px solid #b2c9bd;">${escapeHtml(a.asuntos || 'N/A')}</td>
+            <td style="border: 1px solid #b2c9bd;">${escapeHtml(a.indicador || 'Sin reporte')}</td>
+            <td style="border: 1px solid #b2c9bd; text-align: center;">${escapeHtml(a.porcentaje || 'N/A')}</td>
+            <td style="border: 1px solid #b2c9bd; text-align: center; color: #555;">${escapeHtml(a.hora || '')}</td>
+          </tr>
+        `;
+      });
+
+      const excelHtml = `
+        <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+        <head>
+          <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+          <!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Padrón y Firmas</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->
+          <style>
+            table { border-collapse: collapse; font-family: Arial, Calibri, sans-serif; width: 100%; }
+            th { background-color: #006341; color: #ffffff; font-weight: bold; border: 1.5px solid #004d32; text-align: center; padding: 10px 8px; font-size: 10.5pt; }
+            td { padding: 6px 8px; font-size: 10pt; }
+          </style>
+        </head>
+        <body>
+          <table style="margin-bottom: 14px;">
+            <tr><td colspan="10" style="font-size: 14pt; font-weight: bold; color: #006341; text-align: center;">INSTITUTO MEXICANO DEL SEGURO SOCIAL</td></tr>
+            <tr><td colspan="10" style="font-size: 11pt; color: #555; text-align: center;">ÓRGANO DE OPERACIÓN ADMINISTRATIVA DESCONCENTRADA SINALOA</td></tr>
+            <tr><td colspan="10" style="font-size: 12pt; font-weight: bold; color: #b38e5d; text-align: center;">COORDINACIÓN DE COMPETITIVIDAD • REGISTRO DE ASISTENCIA Y FIRMAS DIGITALES</td></tr>
+            <tr><td colspan="10" style="font-size: 9.5pt; color: #666; text-align: center;">Fecha de emisión: ${new Date().toLocaleDateString('es-MX')} | Total de Asistentes: ${asistentes.length}</td></tr>
+          </table>
+          <table>
+            <thead>
+              <tr style="height: 38px;">
+                <th style="width: 45px;">No.</th>
+                <th style="width: 260px;">Nombre del Asistente</th>
+                <th style="width: 220px;">Unidad Médica / Área</th>
+                <th style="width: 230px;">Cargo</th>
+                <th style="width: 110px;">Matrícula</th>
+                <th style="width: 170px;">Firma Digital</th>
+                <th style="width: 270px;">Asuntos Relevantes</th>
+                <th style="width: 210px;">Indicador Informado</th>
+                <th style="width: 110px;">Cumplimiento</th>
+                <th style="width: 95px;">Hora</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rowsHtml}
+            </tbody>
+          </table>
+        </body>
+        </html>
+      `;
+
+      const blob = new Blob([excelHtml], { type: 'application/vnd.ms-excel;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Asistentes_y_Firmas_Competitividad_Sinaloa_${new Date().toISOString().slice(0,10)}.xls`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
+
+    // GENERACIÓN Y DESCARGA DIRECTA DE MINUTA OFICIAL EN WORD (.DOC)
+    function descargarMinutaWord() {
+      if (!isAdminAuthed) {
+        abrirModalAdmin(() => descargarMinutaWord());
+        return;
+      }
+      if (asistentes.length === 0) {
+        alert("Primero capture o registre al menos un asistente con firma para compilar la Minuta.");
+        return;
+      }
+
+      const fechaHoy = new Date().toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' });
+
+      // Filas de asuntos e indicadores
+      let asuntosRows = '';
+      let numAsuntos = 1;
+      asistentes.forEach((a) => {
+        if (a.asuntos && a.asuntos.trim() !== '' && a.asuntos !== 'Sin asunto') {
+          asuntosRows += `
+            <tr style="vertical-align: top;">
+              <td style="border: 1px solid #000; padding: 6px; font-weight: bold; width: 35px; text-align: center;">${numAsuntos++}</td>
+              <td style="border: 1px solid #000; padding: 6px; width: 190px;"><strong>${escapeHtml(a.nombre)}</strong><br><span style="font-size: 8.5pt; color: #444;">${escapeHtml(a.cargo)}</span><br><span style="font-size: 8pt; color: #006341;">${escapeHtml(a.unidad || '')}</span></td>
+              <td style="border: 1px solid #000; padding: 6px;">${escapeHtml(a.asuntos)}</td>
+              <td style="border: 1px solid #000; padding: 6px; width: 140px;">${escapeHtml(a.indicador || 'Sin reporte')}</td>
+              <td style="border: 1px solid #000; padding: 6px; width: 80px; text-align: center; font-weight: bold;">${escapeHtml(a.porcentaje || 'N/A')}</td>
+            </tr>
+          `;
+        }
+      });
+
+      if (!asuntosRows) {
+        asuntosRows = `<tr><td colspan="5" style="border: 1px solid #000; padding: 10px; text-align: center; color: #555;">Seguimiento integral a indicadores hospitalarios prioritarios y compromisos de gestión del Modelo Institucional para la Competitividad (MC) 2026.</td></tr>`;
+      }
+
+      // Filas de firmas
+      let firmasRows = '';
+      asistentes.forEach((a, i) => {
+        const u = escapeHtml(a.unidad || 'Coordinación de Competitividad');
+        const imgFirma = (a.firma && a.firma.startsWith('data:image'))
+          ? `<img src="${a.firma}" width="145" height="55" style="display:block; margin:auto;" />`
+          : '<span style="color:#777;">Sin firma</span>';
+
+        firmasRows += `
+          <tr style="height: 62px; vertical-align: middle;">
+            <td style="border: 1px solid #000; padding: 6px; font-weight: bold; width: 30px; text-align: center;">${i + 1}</td>
+            <td style="border: 1px solid #000; padding: 6px; font-weight: bold; width: 185px;">${escapeHtml(a.nombre)}</td>
+            <td style="border: 1px solid #000; padding: 6px; width: 150px;">${u}</td>
+            <td style="border: 1px solid #000; padding: 6px; width: 150px;">${escapeHtml(a.cargo)}</td>
+            <td style="border: 1px solid #000; padding: 6px; width: 75px; text-align: center; font-family: monospace;">${escapeHtml(a.matricula)}</td>
+            <td style="border: 1px solid #000; padding: 4px; text-align: center; width: 155px; background-color: #ffffff;">${imgFirma}</td>
+          </tr>
+        `;
+      });
+
+      const wordHtml = `
+        <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+        <head>
+          <meta charset="utf-8">
+          <title>Minuta de Trabajo MC</title>
+          <!--[if gte mso 9]>
+          <xml>
+            <w:WordDocument>
+              <w:View>Print</w:View>
+              <w:Zoom>100</w:Zoom>
+              <w:DoNotOptimizeForBrowser/>
+            </w:WordDocument>
+          </xml>
+          <![endif]-->
+          <style>
+            @page { size: 21.59cm 27.94cm; margin: 2.0cm 2.0cm 2.0cm 2.0cm; }
+            body { font-family: Arial, sans-serif; font-size: 10pt; line-height: 1.35; color: #000; }
+            h1 { font-size: 13.5pt; font-weight: bold; color: #006341; margin-bottom: 2px; text-align: center; }
+            h2 { font-size: 10.5pt; font-weight: bold; color: #b38e5d; margin-top: 0; margin-bottom: 12px; text-align: center; }
+            .section-header { background-color: #006341; color: #ffffff; font-weight: bold; padding: 5px 8px; font-size: 10pt; margin-top: 14px; margin-bottom: 4px; }
+            table { border-collapse: collapse; width: 100%; margin-bottom: 12px; font-size: 9pt; }
+            th { background-color: #eef3ef; border: 1px solid #000; padding: 6px; font-weight: bold; text-align: center; color: #004d32; }
+            td { border: 1px solid #000; padding: 6px; }
+            .meta-box { border: 1px solid #000; width: 100%; margin-bottom: 12px; }
+          </style>
+        </head>
+        <body>
+          <div style="text-align: center; margin-bottom: 10px;">
+            <p style="font-size: 12.5pt; font-weight: bold; margin: 0;">INSTITUTO MEXICANO DEL SEGURO SOCIAL</p>
+            <p style="font-size: 10pt; margin: 2px 0;">ÓRGANO DE OPERACIÓN ADMINISTRATIVA DESCONCENTRADA SINALOA</p>
+            <p style="font-size: 10pt; font-weight: bold; color: #006341; margin: 2px 0;">JEFATURA DE SERVICIOS DE PRESTACIONES MÉDICAS • COORDINACIÓN DE COMPETITIVIDAD</p>
+            <h1>MINUTA DE TRABAJO Y SEGUIMIENTO</h1>
+            <h2>MODELO INSTITUCIONAL PARA LA COMPETITIVIDAD (MC)</h2>
+          </div>
+
+          <div class="section-header">1. DATOS GENERALES DE LA REUNIÓN</div>
+          <table class="meta-box">
+            <tr>
+              <td style="font-weight: bold; background-color: #f7f7f7; width: 22%;">Órgano / Unidad:</td>
+              <td style="width: 28%;">Coordinación de Competitividad Sinaloa</td>
+              <td style="font-weight: bold; background-color: #f7f7f7; width: 20%;">Fecha:</td>
+              <td style="width: 30%;">${fechaHoy}</td>
+            </tr>
+            <tr>
+              <td style="font-weight: bold; background-color: #f7f7f7;">Lugar:</td>
+              <td>Sala de Juntas / Plataforma Virtual</td>
+              <td style="font-weight: bold; background-color: #f7f7f7;">Horario:</td>
+              <td>10:00 a 13:30 hrs</td>
+            </tr>
+            <tr>
+              <td style="font-weight: bold; background-color: #f7f7f7;">Objetivo:</td>
+              <td colspan="3">Reunión de seguimiento a indicadores de calidad y servicio, acuerdos prioritarios del Cuerpo Directivo y compromisos del Modelo Institucional para la Competitividad (MC) 2026.</td>
+            </tr>
+          </table>
+
+          <div class="section-header">2. ASUNTOS RELEVANTES E INDICADORES REPORTADOS</div>
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 35px;">No.</th>
+                <th style="width: 190px;">Participante / Área</th>
+                <th>Asuntos Relevantes Abordados</th>
+                <th style="width: 140px;">Indicador Informado</th>
+                <th style="width: 80px;">Cumplimiento</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${asuntosRows}
+            </tbody>
+          </table>
+
+          <div class="section-header">3. LISTA DE ASISTENCIA Y FIRMAS DE CONFORMIDAD</div>
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 30px;">No.</th>
+                <th>Nombre del Asistente</th>
+                <th>Unidad Médica / Área</th>
+                <th>Cargo</th>
+                <th style="width: 75px;">Matrícula</th>
+                <th style="width: 155px;">Firma Digital</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${firmasRows}
+            </tbody>
+          </table>
+
+          <p style="font-size: 8.5pt; color: #444; text-align: justify; margin-top: 14px;">
+            Las firmas autógrafas/digitales estampadas en el presente instrumento dan fe de la asistencia, acuerdos convenidos y conformidad de los titulares y representantes de las distintas Unidades Médicas y Administrativas del OOAD Sinaloa convocados a la sesión de trabajo.
+          </p>
+        </body>
+        </html>
+      `;
+
+      const blob = new Blob([wordHtml], { type: 'application/msword;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Minuta_Competitividad_Sinaloa_${new Date().toISOString().slice(0,10)}.doc`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
+
+    // EXPORTACIÓN JSON PARA AUTOMATIZACIONES Y SCRIPTS
     function exportarJSON() {
       if (!isAdminAuthed) {
         abrirModalAdmin(() => exportarJSON());
@@ -1694,6 +1941,7 @@
       a.remove();
     }
 
+    // EXPORTACIÓN CSV TEXTO PLANO
     function exportarCSV() {
       if (!isAdminAuthed) {
         abrirModalAdmin(() => exportarCSV());
@@ -1716,33 +1964,6 @@
       document.body.appendChild(a);
       a.click();
       a.remove();
-    }
-
-    function descargarPaqueteMinuta() {
-      if (!isAdminAuthed) {
-        abrirModalAdmin(() => descargarPaqueteMinuta());
-        return;
-      }
-      if (asistentes.length === 0) {
-        alert("Primero capture al menos un asistente con firma para compilar la minuta.");
-        return;
-      }
-      // Genera archivo unificado listo para el script generador de docx
-      const paquete = {
-        unidad: "COORDINACIÓN DE COMPETITIVIDAD EN SINALOA",
-        ciudad: "SINALOA, MÉXICO",
-        fecha: new Date().toLocaleDateString('es-MX'),
-        totalAsistentes: asistentes.length,
-        asistentes: asistentes
-      };
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(paquete, null, 2));
-      const a = document.createElement('a');
-      a.setAttribute("href", dataStr);
-      a.setAttribute("download", `datos_minuta_competitividad_sinaloa_${new Date().toISOString().slice(0,10)}.json`);
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      alert("Se descargó 'datos_minuta_hgz49.json'. El script de PowerShell tomará este archivo y las firmas para estamparlas automáticamente en la Minuta Word/PDF.");
     }
 
     // Inicializar estado de administración y tabla si había registros
