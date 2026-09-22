@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HGZ No. 49 - Registro de Asistencia y Asuntos Relevantes</title>
+  <title>Coordinación de Competitividad en Sinaloa - Registro de Asistencia y Minuta</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -842,11 +842,11 @@
         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99zM11 16h2v2h-2zm0-6h2v4h-2z"/></svg>
         IMSS • Órgano de Operación Administrativa Desconcentrada Sinaloa
       </div>
-      <h1 class="header-title">HOSPITAL GENERAL DE ZONA NO. 49</h1>
-      <p class="header-subtitle">Registro de asistencia y asuntos relevantes a tratar en reunión de la Alta Dirección / Comité de Calidad</p>
+      <h1 class="header-title">COORDINACIÓN DE COMPETITIVIDAD EN SINALOA</h1>
+      <p class="header-subtitle">Registro de asistencia, acuerdos y asuntos relevantes del Modelo Institucional para la Competitividad (MC)</p>
       
       <div class="header-meta">
-        <span><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg> Los Mochis, Sinaloa</span>
+        <span><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg> OOAD Sinaloa</span>
         <span><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/></svg> <span id="fechaActual">21 de septiembre de 2026</span></span>
         <span><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z"/></svg> Modelo Institucional para la Competitividad (MC)</span>
       </div>
@@ -881,15 +881,99 @@
             <div class="helper-text">Tal como debe aparecer en la Minuta Institucional.</div>
           </div>
 
-          <!-- 2. Área o Cargo -->
+          <!-- 2. Unidad Médica o Administrativa (Combo Box 75 Unidades) -->
+          <div class="form-group full">
+            <label for="unidad">2. Selecciona Unidad de la OOAD Sinaloa en la que laboras<span class="required-tag">*</span></label>
+            <select id="unidad" name="unidad" required style="font-weight: 500; border-color: var(--imss-green);">
+              <option value="">-- Selecciona Unidad de la OOAD Sinaloa --</option>
+              <option value="Almacén Delegacional">Almacén Delegacional</option>
+              <option value="C.S.S. Ahome">C.S.S. Ahome</option>
+              <option value="C.S.S. Culiacán">C.S.S. Culiacán</option>
+              <option value="C.S.S. Guasave">C.S.S. Guasave</option>
+              <option value="C.S.S. Juan José Ríos">C.S.S. Juan José Ríos</option>
+              <option value="C.S.S. Los Mochis">C.S.S. Los Mochis</option>
+              <option value="C.S.S. Mazatlán">C.S.S. Mazatlán</option>
+              <option value="C.S.S. Navolato">C.S.S. Navolato</option>
+              <option value="C.S.S. Ruiz Cortines">C.S.S. Ruiz Cortines</option>
+              <option value="Centro de Capacitación del SNTSS">Centro de Capacitación del SNTSS</option>
+              <option value="Delegación">Delegación</option>
+              <option value="Edificio CRESTCAP">Edificio CRESTCAP</option>
+              <option value="Guardería Culiacán">Guardería Culiacán</option>
+              <option value="Guardería Mazatlán">Guardería Mazatlán</option>
+              <option value="HGP 2 Los Mochis">HGP 2 Los Mochis</option>
+              <option value="HGR 1 Culiacán">HGR 1 Culiacán</option>
+              <option value="HGSMF 30 Guamúchil">HGSMF 30 Guamúchil</option>
+              <option value="HGSMF 4 Navolato">HGSMF 4 Navolato</option>
+              <option value="HGZ 49 Los Mochis">HGZ 49 Los Mochis</option>
+              <option value="HGZMF 28 Costa Rica">HGZMF 28 Costa Rica</option>
+              <option value="HGZMF 3 Mazatlán">HGZMF 3 Mazatlán</option>
+              <option value="HGZMF 32 Guasave">HGZMF 32 Guasave</option>
+              <option value="Hospital Rural IMSS BIENESTAR El Fuerte">Hospital Rural IMSS BIENESTAR El Fuerte</option>
+              <option value="Hospital Rural IMSS BIENESTAR Villa Unión">Hospital Rural IMSS BIENESTAR Villa Unión</option>
+              <option value="Oficina de Jurídico">Oficina de Jurídico</option>
+              <option value="Sede SNTSS">Sede SNTSS</option>
+              <option value="Subdelegación Culiacán">Subdelegación Culiacán</option>
+              <option value="Subdelegación Guasave">Subdelegación Guasave</option>
+              <option value="Subdelegación Los Mochis">Subdelegación Los Mochis</option>
+              <option value="Subdelegación Mazatlán">Subdelegación Mazatlán</option>
+              <option value="Tienda Culiacán">Tienda Culiacán</option>
+              <option value="Tienda Los Mochis">Tienda Los Mochis</option>
+              <option value="Tienda Mazatlán">Tienda Mazatlán</option>
+              <option value="UMF 10 Villa Ángel">UMF 10 Villa Ángel</option>
+              <option value="UMF 14 Santa Rosa">UMF 14 Santa Rosa</option>
+              <option value="UMF 17 Choix">UMF 17 Choix</option>
+              <option value="UMF 19 Cabezón">UMF 19 Cabezón</option>
+              <option value="UMF 20 Pericos">UMF 20 Pericos</option>
+              <option value="UMF 21 La Cruz">UMF 21 La Cruz</option>
+              <option value="UMF 24 Bachoco">UMF 24 Bachoco</option>
+              <option value="UMF 25 Tamazula">UMF 25 Tamazula</option>
+              <option value="UMF 26 La Entrada">UMF 26 La Entrada</option>
+              <option value="UMF 27 San Ignacio">UMF 27 San Ignacio</option>
+              <option value="UMF 34 E. Marmol">UMF 34 E. Marmol</option>
+              <option value="UMF 35 Culiacán">UMF 35 Culiacán</option>
+              <option value="UMF 36 Culiacán">UMF 36 Culiacán</option>
+              <option value="UMF 37 Los Mochis">UMF 37 Los Mochis</option>
+              <option value="UMF 38 La Concordia">UMF 38 La Concordia</option>
+              <option value="UMF 39 Chávez Talaman">UMF 39 Chávez Talaman</option>
+              <option value="UMF 40 Jahuara">UMF 40 Jahuara</option>
+              <option value="UMF 41 Bamoa">UMF 41 Bamoa</option>
+              <option value="UMF 43 San Blas">UMF 43 San Blas</option>
+              <option value="UMF 45 Mazatlán">UMF 45 Mazatlán</option>
+              <option value="UMF 46 Culiacán">UMF 46 Culiacán</option>
+              <option value="UMF 5 Topolobampo">UMF 5 Topolobampo</option>
+              <option value="UMF 50 Cosala">UMF 50 Cosala</option>
+              <option value="UMF 51 La Angostura">UMF 51 La Angostura</option>
+              <option value="UMF 52 Culiacán">UMF 52 Culiacán</option>
+              <option value="UMF 53 Inf. Barrancos">UMF 53 Inf. Barrancos</option>
+              <option value="UMF 54 Mocorito">UMF 54 Mocorito</option>
+              <option value="UMF 56 Mazatlán">UMF 56 Mazatlán</option>
+              <option value="UMFH 6 Ahome">UMFH 6 Ahome</option>
+              <option value="UMFH 7 Higuera">UMFH 7 Higuera</option>
+              <option value="UMFH 8 Mochicahui">UMFH 8 Mochicahui</option>
+              <option value="UMFH 9 Ruíz Cortínez">UMFH 9 Ruíz Cortínez</option>
+              <option value="UMFH 11 Villa Juárez">UMFH 11 Villa Juárez</option>
+              <option value="UMFH 13 San Miguel">UMFH 13 San Miguel</option>
+              <option value="UMFH 15 Juan José Ríos">UMFH 15 Juan José Ríos</option>
+              <option value="UMFH 18 El Colorado">UMFH 18 El Colorado</option>
+              <option value="UMFH 22 El Dorado">UMFH 22 El Dorado</option>
+              <option value="UMFH 23 La Reforma">UMFH 23 La Reforma</option>
+              <option value="UMFH 29 Escuinapa">UMFH 29 Escuinapa</option>
+              <option value="UMFH 31 El Rosario">UMFH 31 El Rosario</option>
+              <option value="UMFH 33 El Carrizo">UMFH 33 El Carrizo</option>
+              <option value="UMF-UMAA 55 Culiacán">UMF-UMAA 55 Culiacán</option>
+            </select>
+            <div class="helper-text">Catálogo oficial de unidades de la Iniciativa 5 Acciones por la Integridad / OOAD Sinaloa.</div>
+          </div>
+
+          <!-- 3. Área o Cargo -->
           <div class="form-group">
-            <label for="cargo">2. Área o cargo<span class="required-tag">*</span></label>
+            <label for="cargo">3. Área o cargo<span class="required-tag">*</span></label>
             <input type="text" id="cargo" name="cargo" placeholder="Ej. COORDINADOR CLÍNICO DE EDUCACIÓN" required>
           </div>
 
-          <!-- 3. Matrícula -->
+          <!-- 4. Matrícula -->
           <div class="form-group">
-            <label for="matricula">3. Matrícula institucional<span class="required-tag">*</span></label>
+            <label for="matricula">4. Matrícula institucional<span class="required-tag">*</span></label>
             <input type="text" id="matricula" name="matricula" placeholder="Ej. 98310849" maxlength="10" required>
           </div>
         </div>
@@ -901,14 +985,14 @@
 
         <!-- 4. Asuntos Relevantes -->
         <div class="form-group">
-          <label for="asuntos">4. Asuntos relevantes a presentar en la reunión<span class="required-tag">*</span></label>
+          <label for="asuntos">5. Asuntos relevantes a presentar en la reunión<span class="required-tag">*</span></label>
           <textarea id="asuntos" name="asuntos" placeholder="Describe brevemente los puntos o temas a someter ante el Cuerpo de Gobierno o Comité..." required></textarea>
         </div>
 
         <div class="grid-2">
           <!-- 5. Indicadores a Informar -->
           <div class="form-group">
-            <label for="indicador">5. Indicador a informar (Opcional)</label>
+            <label for="indicador">6. Indicador a informar (Opcional)</label>
             <select id="indicador" name="indicador">
               <option value="">-- Selecciona un indicador hospitalario si aplica --</option>
               <option value="Sin reporte de Indicadores">Sin reporte de Indicadores</option>
@@ -945,7 +1029,7 @@
 
           <!-- 6. Porcentaje Actual -->
           <div class="form-group">
-            <label for="porcentaje">6. Porcentaje actual de cumplimiento (Opcional)</label>
+            <label for="porcentaje">7. Porcentaje actual de cumplimiento (Opcional)</label>
             <input type="text" id="porcentaje" name="porcentaje" placeholder="Ej. 94.5% o Meta alcanzada">
           </div>
         </div>
@@ -1089,7 +1173,7 @@
         <svg viewBox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg>
       </div>
       <h3 class="modal-title">¡Registro Completado!</h3>
-      <p class="modal-desc" id="modalMensaje">La asistencia y firma han sido registradas con éxito para la Minuta del HGZ 49.</p>
+      <p class="modal-desc" id="modalMensaje">La asistencia y firma han sido registradas con éxito para la Minuta de la Coordinación de Competitividad.</p>
       <div style="display: flex; gap: 12px; justify-content: center;">
         <button class="btn-secondary" onclick="cerrarModal(false)">Nuevo Registro</button>
         <button class="btn-submit" style="padding: 10px 20px;" onclick="cerrarModal(true)">Ver Lista</button>
@@ -1246,6 +1330,7 @@
 
       const form = document.getElementById('registroForm');
       const nombre = form.nombre.value.trim().toUpperCase();
+      const unidad = form.unidad ? form.unidad.value : 'COORDINACIÓN DE COMPETITIVIDAD';
       const cargo = form.cargo.value.trim().toUpperCase();
       const matricula = form.matricula.value.trim();
       const asuntos = form.asuntos.value.trim();
@@ -1260,6 +1345,7 @@
         fechaHora: new Date().toLocaleString('es-MX'),
         hora: new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }),
         nombre: nombre,
+        unidad: unidad,
         cargo: cargo,
         matricula: matricula,
         asuntos: asuntos,
@@ -1334,6 +1420,7 @@
         <tr>
           <td><strong>${idx + 1}</strong></td>
           <td><strong>${escapeHtml(a.nombre)}</strong></td>
+          <td><span class="badge-unit" style="font-size: 0.82rem; color: var(--imss-green-dark); font-weight: 600;">${escapeHtml(a.unidad || 'No especificada')}</span></td>
           <td>${escapeHtml(a.cargo)}</td>
           <td><code>${escapeHtml(a.matricula)}</code></td>
           <td><img class="sig-preview" src="${a.firma}" alt="Firma"></td>
@@ -1459,7 +1546,7 @@
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(asistentes, null, 2));
       const a = document.createElement('a');
       a.setAttribute("href", dataStr);
-      a.setAttribute("download", `asistentes_hgz49_${new Date().toISOString().slice(0,10)}.json`);
+      a.setAttribute("download", `asistentes_competitividad_sinaloa_${new Date().toISOString().slice(0,10)}.json`);
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -1474,15 +1561,16 @@
         alert("No hay asistentes registrados para exportar.");
         return;
       }
-      let csv = "\uFEFFNo,Nombre,Cargo,Matricula,Asuntos,Indicador,Porcentaje,Hora\n";
+      let csv = "\uFEFFNo,Nombre,Unidad,Cargo,Matricula,Asuntos,Indicador,Porcentaje,Hora\n";
       asistentes.forEach((a, i) => {
-        csv += `"${i+1}","${a.nombre.replace(/"/g, '""')}","${a.cargo.replace(/"/g, '""')}","${a.matricula}","${a.asuntos.replace(/"/g, '""')}","${a.indicador.replace(/"/g, '""')}","${a.porcentaje}","${a.hora}"\n`;
+        const u = (a.unidad || '').replace(/"/g, '""');
+        csv += `"${i+1}","${a.nombre.replace(/"/g, '""')}","${u}","${a.cargo.replace(/"/g, '""')}","${a.matricula}","${a.asuntos.replace(/"/g, '""')}","${a.indicador.replace(/"/g, '""')}","${a.porcentaje}","${a.hora}"\n`;
       });
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `asistentes_hgz49_${new Date().toISOString().slice(0,10)}.csv`;
+      a.download = `asistentes_competitividad_sinaloa_${new Date().toISOString().slice(0,10)}.csv`;
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -1499,8 +1587,8 @@
       }
       // Genera archivo unificado listo para el script generador de docx
       const paquete = {
-        unidad: "HOSPITAL GENERAL DE ZONA NO. 49",
-        ciudad: "LOS MOCHIS, SINALOA",
+        unidad: "COORDINACIÓN DE COMPETITIVIDAD EN SINALOA",
+        ciudad: "SINALOA, MÉXICO",
         fecha: new Date().toLocaleDateString('es-MX'),
         totalAsistentes: asistentes.length,
         asistentes: asistentes
@@ -1508,7 +1596,7 @@
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(paquete, null, 2));
       const a = document.createElement('a');
       a.setAttribute("href", dataStr);
-      a.setAttribute("download", `datos_minuta_hgz49_${new Date().toISOString().slice(0,10)}.json`);
+      a.setAttribute("download", `datos_minuta_competitividad_sinaloa_${new Date().toISOString().slice(0,10)}.json`);
       document.body.appendChild(a);
       a.click();
       a.remove();
