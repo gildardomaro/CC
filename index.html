@@ -830,7 +830,42 @@
         justify-content: center;
       }
     }
+    /* INDICADOR DE NUBE EN TIEMPO REAL */
+    .cloud-badge-box {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.18);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: #ffffff;
+      backdrop-filter: blur(6px);
+    }
+    .status-pulse {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #25d366;
+      box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7);
+      animation: pulse 2s infinite;
+    }
+    .status-pulse.pending {
+      background: #f1b44c;
+      box-shadow: 0 0 0 0 rgba(241, 180, 76, 0.7);
+    }
+    @keyframes pulse {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7); }
+      70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(37, 211, 102, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); }
+    }
   </style>
+  <!-- Firebase SDKs Compat para sincronización en tiempo real desde GitHub Pages -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
 <body>
 
@@ -845,10 +880,16 @@
       <h1 class="header-title">COORDINACIÓN DE COMPETITIVIDAD EN SINALOA</h1>
       <p class="header-subtitle">Registro de asistencia, acuerdos y asuntos relevantes del Modelo Institucional para la Competitividad (MC)</p>
       
-      <div class="header-meta">
-        <span><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg> OOAD Sinaloa</span>
-        <span><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/></svg> <span id="fechaActual">21 de septiembre de 2026</span></span>
-        <span><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z"/></svg> Modelo Institucional para la Competitividad (MC)</span>
+      <div class="header-meta" style="justify-content: space-between; align-items: center;">
+        <div style="display: flex; gap: 18px; flex-wrap: wrap;">
+          <span><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg> OOAD Sinaloa</span>
+          <span><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/></svg> <span id="fechaActual">22 de septiembre de 2026</span></span>
+          <span><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z"/></svg> Modelo Institucional para la Competitividad (MC)</span>
+        </div>
+        <div class="cloud-badge-box" id="cloudStatusBadge">
+          <div class="status-pulse pending" id="cloudPulse"></div>
+          <span id="cloudStatusText">Conectando nube Firebase...</span>
+        </div>
       </div>
     </header>
 
@@ -1211,18 +1252,104 @@
   </div>
 
   <script>
-    // ESTADO LOCAL DE LA APLICACIÓN
-    let asistentes = [];
-    const STORAGE_KEY = 'hgz49_asistentes_reunion_v1';
+    // CONFIGURACIÓN DE FIREBASE CENTRALIZADO EN LA NUBE
+    const firebaseConfig = {
+      apiKey: "AIzaSyCKl8NjiCRPJ-KTbSFaJx4Xtr4IauvwSug",
+      authDomain: "competitividad-sinaloa.firebaseapp.com",
+      databaseURL: "https://competitividad-sinaloa-default-rtdb.firebaseio.com",
+      projectId: "competitividad-sinaloa",
+      storageBucket: "competitividad-sinaloa.firebasestorage.app",
+      messagingSenderId: "280333220792",
+      appId: "1:280333220792:web:7505b28b824b44cad86d4d",
+      measurementId: "G-HK4C49B83T"
+    };
 
-    // Cargar datos previos de localStorage si existen
+    // Inicializar Firebase
+    let dbFirestore = null;
+    let coleccionAsistentes = null;
+    let rtdbRef = null;
+    let sincronizacionActiva = false;
+
     try {
-      const guardados = localStorage.getItem(STORAGE_KEY);
+      firebase.initializeApp(firebaseConfig);
+      dbFirestore = firebase.firestore();
+      coleccionAsistentes = dbFirestore.collection('asistentes_minuta');
+      console.log("Firebase inicializado con éxito");
+    } catch(err) {
+      console.warn("Error inicializando Firebase:", err);
+    }
+
+    // ESTADO DE LA APLICACIÓN (NUBE + LOCALSTORAGE HÍBRIDO)
+    let asistentes = [];
+    const STORAGE_KEY = 'competitividad_sinaloa_asistentes_v2';
+
+    // 1. Cargar datos previos de localStorage para disponibilidad inmediata
+    try {
+      const guardados = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('hgz49_asistentes_reunion_v1');
       if (guardados) {
         asistentes = JSON.parse(guardados);
       }
     } catch(e) {
       console.warn("No se pudo leer localStorage:", e);
+    }
+
+    // 2. Conectar y escuchar Firestore en tiempo real
+    function iniciarSincronizacionNube() {
+      const badge = document.getElementById('cloudStatusBadge');
+      const pulse = document.getElementById('cloudPulse');
+      const text = document.getElementById('cloudStatusText');
+
+      if (!coleccionAsistentes) {
+        if (text) text.innerText = 'Modo Local (Sin Nube)';
+        return;
+      }
+
+      // Escuchar cambios en vivo desde cualquier celular o PC
+      coleccionAsistentes.onSnapshot((snapshot) => {
+        sincronizacionActiva = true;
+        if (pulse) { pulse.className = 'status-pulse'; }
+        if (text) { text.innerText = `Nube Activa (${snapshot.size} en línea)`; }
+
+        const datosRemotos = [];
+        snapshot.forEach(doc => {
+          datosRemotos.push({ docId: doc.id, ...doc.data() });
+        });
+
+        // Ordenar por hora / id
+        datosRemotos.sort((a, b) => (a.id || 0) - (b.id || 0));
+
+        if (datosRemotos.length > 0) {
+          asistentes = datosRemotos;
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(asistentes));
+          actualizarTabla();
+        }
+
+        // Subir cualquier registro huérfano local hacia la nube (autorrecuperación)
+        autoRecuperarRegistrosLocales();
+      }, (error) => {
+        console.warn("Aviso de conexión Firestore:", error);
+        sincronizacionActiva = false;
+        if (pulse) { pulse.className = 'status-pulse pending'; }
+        if (text) {
+          text.innerText = error.code === 'permission-denied' 
+            ? 'Reglas Firebase pendientes' 
+            : 'Conectando con Nube...';
+        }
+      });
+    }
+
+    // Autorrecuperar registros locales y subirlos a la nube
+    function autoRecuperarRegistrosLocales() {
+      if (!coleccionAsistentes) return;
+      try {
+        const local = JSON.parse(localStorage.getItem(STORAGE_KEY) || localStorage.getItem('hgz49_asistentes_reunion_v1') || '[]');
+        local.forEach(asistente => {
+          if (asistente && asistente.id) {
+            coleccionAsistentes.doc(String(asistente.id)).set(asistente, { merge: true })
+              .catch(e => console.log("Pendiente sincronizar:", e.message));
+          }
+        });
+      } catch(e) {}
     }
 
     // CONFIGURACIÓN DE CANVAS DE FIRMA
@@ -1354,15 +1481,27 @@
         firma: firmaBase64
       };
 
+      // 1. Guardar de inmediato en memoria local
       asistentes.push(nuevoAsistente);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(asistentes));
+      actualizarTabla();
 
-      // Mostrar modal
-      document.getElementById('modalMensaje').innerText = `La asistencia y firma de ${nombre} han sido guardadas.`;
+      // 2. Transmitir en tiempo real a Firebase Cloud (para que lo vea el administrador)
+      if (coleccionAsistentes) {
+        coleccionAsistentes.doc(String(nuevoAsistente.id)).set(nuevoAsistente)
+          .then(() => {
+            console.log("¡Sincronizado con éxito en la nube!");
+          })
+          .catch((err) => {
+            console.warn("Aviso al guardar en nube:", err);
+          });
+      }
+
+      // Mostrar modal de confirmación
+      document.getElementById('modalMensaje').innerText = `La asistencia y firma de ${nombre} han sido registradas y transmitidas a la base de datos de la Coordinación.`;
       document.getElementById('modalExito').classList.add('active');
 
       limpiarFormulario();
-      actualizarTabla();
     }
 
     function limpiarFormulario() {
@@ -1522,6 +1661,9 @@
       if (confirm("¿Estás seguro de eliminar este asistente de la lista?")) {
         asistentes = asistentes.filter(a => a.id !== id);
         localStorage.setItem(STORAGE_KEY, JSON.stringify(asistentes));
+        if (coleccionAsistentes) {
+          coleccionAsistentes.doc(String(id)).delete().catch(e => console.warn(e));
+        }
         actualizarTabla();
       }
     }
@@ -1606,6 +1748,7 @@
     // Inicializar estado de administración y tabla si había registros
     actualizarVistaAdmin();
     actualizarTabla();
+    iniciarSincronizacionNube();
   </script>
 </body>
 </html>
