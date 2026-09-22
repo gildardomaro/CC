@@ -1763,7 +1763,7 @@
       a.remove();
     }
 
-    // GENERACIÓN Y DESCARGA DIRECTA DE MINUTA OFICIAL EN WORD (.DOC)
+    // GENERACIÓN Y DESCARGA DE MINUTA OFICIAL EN FORMATO UMF37-02-021726
     function descargarMinutaWord() {
       if (!isAdminAuthed) {
         abrirModalAdmin(() => descargarMinutaWord());
@@ -1774,54 +1774,51 @@
         return;
       }
 
-      const fechaHoy = new Date().toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' });
+      // Fecha en formato DD/MM/AAAA
+      const hoy = new Date();
+      const dd = String(hoy.getDate()).padStart(2, '0');
+      const mm = String(hoy.getMonth() + 1).padStart(2, '0');
+      const aaaa = hoy.getFullYear();
+      const fechaHoy = `${dd}/${mm}/${aaaa}`;
 
-      // Filas de asuntos e indicadores
-      let asuntosRows = '';
-      let numAsuntos = 1;
-      asistentes.forEach((a) => {
-        if (a.asuntos && a.asuntos.trim() !== '' && a.asuntos !== 'Sin asunto') {
-          asuntosRows += `
-            <tr style="vertical-align: top;">
-              <td style="border: 1px solid #000; padding: 6px; font-weight: bold; width: 35px; text-align: center;">${numAsuntos++}</td>
-              <td style="border: 1px solid #000; padding: 6px; width: 190px;"><strong>${escapeHtml(a.nombre)}</strong><br><span style="font-size: 8.5pt; color: #444;">${escapeHtml(a.cargo)}</span><br><span style="font-size: 8pt; color: #006341;">${escapeHtml(a.unidad || '')}</span></td>
-              <td style="border: 1px solid #000; padding: 6px;">${escapeHtml(a.asuntos)}</td>
-              <td style="border: 1px solid #000; padding: 6px; width: 140px;">${escapeHtml(a.indicador || 'Sin reporte')}</td>
-              <td style="border: 1px solid #000; padding: 6px; width: 80px; text-align: center; font-weight: bold;">${escapeHtml(a.porcentaje || 'N/A')}</td>
-            </tr>
-          `;
-        }
-      });
-
-      if (!asuntosRows) {
-        asuntosRows = `<tr><td colspan="5" style="border: 1px solid #000; padding: 10px; text-align: center; color: #555;">Seguimiento integral a indicadores hospitalarios prioritarios y compromisos de gestión del Modelo Institucional para la Competitividad (MC) 2026.</td></tr>`;
+      // Unidad asesorada: si los asistentes coinciden en una unidad se toma esa, o la Coordinación por defecto
+      let unidadAsesorada = "COORDINACIÓN DE COMPETITIVIDAD EN SINALOA";
+      if (asistentes.length > 0 && asistentes[0].unidad && asistentes[0].unidad.trim() !== '') {
+        unidadAsesorada = asistentes[0].unidad.trim().toUpperCase();
       }
 
-      // Filas de firmas
+      // Filas de asistentes y firmas (SOLO DATOS DEL PERSONAL Y FIRMA)
       let firmasRows = '';
-      asistentes.forEach((a, i) => {
-        const u = escapeHtml(a.unidad || 'Coordinación de Competitividad');
+      asistentes.forEach((a) => {
         const imgFirma = (a.firma && a.firma.startsWith('data:image'))
-          ? `<img src="${a.firma}" width="145" height="55" style="display:block; margin:auto;" />`
-          : '<span style="color:#777;">Sin firma</span>';
+          ? `<img src="${a.firma}" width="140" height="52" style="display:block; margin:auto;" />`
+          : '<span style="color:#777; font-size: 8pt;">Sin firma</span>';
 
         firmasRows += `
-          <tr style="height: 62px; vertical-align: middle;">
-            <td style="border: 1px solid #000; padding: 6px; font-weight: bold; width: 30px; text-align: center;">${i + 1}</td>
-            <td style="border: 1px solid #000; padding: 6px; font-weight: bold; width: 185px;">${escapeHtml(a.nombre)}</td>
-            <td style="border: 1px solid #000; padding: 6px; width: 150px;">${u}</td>
-            <td style="border: 1px solid #000; padding: 6px; width: 150px;">${escapeHtml(a.cargo)}</td>
-            <td style="border: 1px solid #000; padding: 6px; width: 75px; text-align: center; font-family: monospace;">${escapeHtml(a.matricula)}</td>
-            <td style="border: 1px solid #000; padding: 4px; text-align: center; width: 155px; background-color: #ffffff;">${imgFirma}</td>
+          <tr style="height: 56px; vertical-align: middle;">
+            <td style="border: 1px solid #808080; padding: 4px 6px; font-weight: bold; color: #111;">${escapeHtml(a.nombre)}</td>
+            <td style="border: 1px solid #808080; padding: 4px 6px; color: #222;">${escapeHtml(a.cargo)}</td>
+            <td style="border: 1px solid #808080; padding: 4px 6px; text-align: center; font-family: monospace; mso-number-format:'\\@';">${escapeHtml(a.matricula)}</td>
+            <td style="border: 1px solid #808080; padding: 3px; text-align: center; background-color: #ffffff;">${imgFirma}</td>
           </tr>
         `;
       });
+
+      // Fila final con el Asesor de Competitividad (como en la plantilla oficial)
+      const asesorRow = `
+        <tr style="height: 56px; vertical-align: middle;">
+          <td style="border: 1px solid #808080; padding: 4px 6px; font-weight: bold; color: #111;">ING. Gildardo Maro Valenzuela</td>
+          <td style="border: 1px solid #808080; padding: 4px 6px; color: #222;">Asesor de Competitividad</td>
+          <td style="border: 1px solid #808080; padding: 4px 6px; text-align: center; font-family: monospace; mso-number-format:'\\@';">98310849</td>
+          <td style="border: 1px solid #808080; padding: 3px; text-align: center; background-color: #ffffff;"></td>
+        </tr>
+      `;
 
       const wordHtml = `
         <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
         <head>
           <meta charset="utf-8">
-          <title>Minuta de Trabajo MC</title>
+          <title>Minuta de reunión de asesoría del Modelo Institucional para la Competitividad</title>
           <!--[if gte mso 9]>
           <xml>
             <w:WordDocument>
@@ -1832,82 +1829,178 @@
           </xml>
           <![endif]-->
           <style>
-            @page { size: 21.59cm 27.94cm; margin: 2.0cm 2.0cm 2.0cm 2.0cm; }
-            body { font-family: Arial, sans-serif; font-size: 10pt; line-height: 1.35; color: #000; }
-            h1 { font-size: 13.5pt; font-weight: bold; color: #006341; margin-bottom: 2px; text-align: center; }
-            h2 { font-size: 10.5pt; font-weight: bold; color: #b38e5d; margin-top: 0; margin-bottom: 12px; text-align: center; }
-            .section-header { background-color: #006341; color: #ffffff; font-weight: bold; padding: 5px 8px; font-size: 10pt; margin-top: 14px; margin-bottom: 4px; }
-            table { border-collapse: collapse; width: 100%; margin-bottom: 12px; font-size: 9pt; }
-            th { background-color: #eef3ef; border: 1px solid #000; padding: 6px; font-weight: bold; text-align: center; color: #004d32; }
-            td { border: 1px solid #000; padding: 6px; }
-            .meta-box { border: 1px solid #000; width: 100%; margin-bottom: 12px; }
+            @page Section1 {
+              size: 21.59cm 27.94cm;
+              margin: 2.38cm 2.0cm 2.40cm 2.0cm;
+            }
+            div.Section1 { page: Section1; }
+            body {
+              font-family: Arial, 'Montserrat', Calibri, sans-serif;
+              font-size: 9pt;
+              line-height: 1.25;
+              color: #000000;
+            }
+            table {
+              border-collapse: collapse;
+              width: 100%;
+              margin-bottom: 12px;
+              font-size: 8.5pt;
+            }
+            td {
+              border: 1px solid #808080;
+              padding: 4px 6px;
+              vertical-align: middle;
+            }
+            .title-shd-0 {
+              background-color: #EBE2D1;
+              font-weight: bold;
+              text-align: center;
+              font-size: 9.5pt;
+              padding: 5px;
+              border: 1px solid #808080;
+            }
+            .title-shd-1 {
+              background-color: #EBE2D1;
+              font-weight: bold;
+              text-align: left;
+              font-size: 9.5pt;
+              padding: 5px;
+              border: 1px solid #808080;
+            }
+            .title-shd-2 {
+              background-color: #EFE7D9;
+              font-weight: bold;
+              text-align: left;
+              font-size: 9.5pt;
+              padding: 5px;
+              border: 1px solid #808080;
+            }
+            .th-shd-3 {
+              background-color: #EFE7D9;
+              font-weight: bold;
+              text-align: center;
+              font-size: 8.5pt;
+              padding: 5px;
+              border: 1px solid #808080;
+            }
+            .lbl {
+              font-weight: bold;
+              background-color: #fbfbfb;
+            }
           </style>
         </head>
         <body>
-          <div style="text-align: center; margin-bottom: 10px;">
-            <p style="font-size: 12.5pt; font-weight: bold; margin: 0;">INSTITUTO MEXICANO DEL SEGURO SOCIAL</p>
-            <p style="font-size: 10pt; margin: 2px 0;">ÓRGANO DE OPERACIÓN ADMINISTRATIVA DESCONCENTRADA SINALOA</p>
-            <p style="font-size: 10pt; font-weight: bold; color: #006341; margin: 2px 0;">JEFATURA DE SERVICIOS DE PRESTACIONES MÉDICAS • COORDINACIÓN DE COMPETITIVIDAD</p>
-            <h1>MINUTA DE TRABAJO Y SEGUIMIENTO</h1>
-            <h2>MODELO INSTITUCIONAL PARA LA COMPETITIVIDAD (MC)</h2>
-          </div>
-
-          <div class="section-header">1. DATOS GENERALES DE LA REUNIÓN</div>
-          <table class="meta-box">
-            <tr>
-              <td style="font-weight: bold; background-color: #f7f7f7; width: 22%;">Órgano / Unidad:</td>
-              <td style="width: 28%;">Coordinación de Competitividad Sinaloa</td>
-              <td style="font-weight: bold; background-color: #f7f7f7; width: 20%;">Fecha:</td>
-              <td style="width: 30%;">${fechaHoy}</td>
-            </tr>
-            <tr>
-              <td style="font-weight: bold; background-color: #f7f7f7;">Lugar:</td>
-              <td>Sala de Juntas / Plataforma Virtual</td>
-              <td style="font-weight: bold; background-color: #f7f7f7;">Horario:</td>
-              <td>10:00 a 13:30 hrs</td>
-            </tr>
-            <tr>
-              <td style="font-weight: bold; background-color: #f7f7f7;">Objetivo:</td>
-              <td colspan="3">Reunión de seguimiento a indicadores de calidad y servicio, acuerdos prioritarios del Cuerpo Directivo y compromisos del Modelo Institucional para la Competitividad (MC) 2026.</td>
-            </tr>
-          </table>
-
-          <div class="section-header">2. ASUNTOS RELEVANTES E INDICADORES REPORTADOS</div>
-          <table>
-            <thead>
-              <tr>
-                <th style="width: 35px;">No.</th>
-                <th style="width: 190px;">Participante / Área</th>
-                <th>Asuntos Relevantes Abordados</th>
-                <th style="width: 140px;">Indicador Informado</th>
-                <th style="width: 80px;">Cumplimiento</th>
+          <div class="Section1">
+            <!-- ENCABEZADO INSTITUCIONAL OFICIAL (PLANTILLA UMF37) -->
+            <table style="border: none; margin-bottom: 8px;">
+              <tr style="border: none;">
+                <td style="border: none; width: 45%; vertical-align: top;">
+                  <strong style="font-size: 11pt; color: #006341;">INSTITUTO MEXICANO DEL SEGURO SOCIAL</strong><br>
+                  <span style="font-size: 8.5pt; color: #444;">ÓRGANO DE OPERACIÓN ADMINISTRATIVA DESCONCENTRADA SINALOA</span>
+                </td>
+                <td style="border: none; width: 55%; text-align: right; vertical-align: top; font-size: 7.5pt; color: #333; line-height: 1.2;">
+                  <strong>DIRECCIÓN GENERAL</strong><br>
+                  Unidad de Integridad y Transparencia<br>
+                  Coordinación de Modernización y Competitividad<br>
+                  Coordinación Técnica de Competitividad Institucional<br>
+                  División de Implementación de la Competitividad Institucional<br>
+                  <strong>Coordinación de Competitividad en el OOAD SINALOA</strong>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              ${asuntosRows}
-            </tbody>
-          </table>
+            </table>
 
-          <div class="section-header">3. LISTA DE ASISTENCIA Y FIRMAS DE CONFORMIDAD</div>
-          <table>
-            <thead>
+            <!-- TABLA 0: DATOS GENERALES DE LA REUNIÓN DE ASESORÍA -->
+            <table>
               <tr>
-                <th style="width: 30px;">No.</th>
-                <th>Nombre del Asistente</th>
-                <th>Unidad Médica / Área</th>
-                <th>Cargo</th>
-                <th style="width: 75px;">Matrícula</th>
-                <th style="width: 155px;">Firma Digital</th>
+                <td colspan="6" class="title-shd-0">Minuta de reunión de asesoría del Modelo Institucional para la Competitividad</td>
               </tr>
-            </thead>
-            <tbody>
+              <tr>
+                <td class="lbl" style="width: 18%;">Unidad asesorada:</td>
+                <td colspan="5" style="font-weight: bold;">${escapeHtml(unidadAsesorada)}</td>
+              </tr>
+              <tr>
+                <td class="lbl">Nombre del asesor:</td>
+                <td colspan="5">ING. GILDARDO MARO VALENZUELA</td>
+              </tr>
+              <tr>
+                <td class="lbl">Lugar o medio:</td>
+                <td colspan="2">SALA DE JUNTAS / REUNIÓN VIRTUAL</td>
+                <td class="lbl" style="width: 25%;">Folio(Núm. consecutivo de asesoría):</td>
+                <td colspan="2" style="width: 15%; text-align: center;">002</td>
+              </tr>
+              <tr>
+                <td class="lbl" style="width: 12%;">Fecha:</td>
+                <td style="width: 18%; text-align: center;">${fechaHoy}</td>
+                <td class="lbl" style="width: 15%;">Hora de inicio:</td>
+                <td style="width: 18%; text-align: center;">10:00 hrs.</td>
+                <td class="lbl" style="width: 18%;">Hora de término:</td>
+                <td style="width: 19%; text-align: center;">13:00 hrs</td>
+              </tr>
+              <tr>
+                <td class="lbl">Objetivo de la reunión:</td>
+                <td colspan="5">Seguimiento a elaboración de Método específico de trabajo, compromisos e indicadores del Modelo Institucional para la Competitividad (MC).</td>
+              </tr>
+            </table>
+
+            <!-- TABLA 1: ASISTENTES (RELLENO CON DATOS DEL PERSONAL Y FIRMAS) -->
+            <table>
+              <tr>
+                <td colspan="4" class="title-shd-1">.Asistentes</td>
+              </tr>
+              <tr style="background-color: #ffffff; text-align: center;">
+                <td style="font-weight: bold; width: 33%;">Nombre</td>
+                <td style="font-weight: bold; width: 27%;">Cargo</td>
+                <td style="font-weight: bold; width: 17%;">Matricula</td>
+                <td style="font-weight: bold; width: 23%;">Firma</td>
+              </tr>
               ${firmasRows}
-            </tbody>
-          </table>
+              ${asesorRow}
+            </table>
 
-          <p style="font-size: 8.5pt; color: #444; text-align: justify; margin-top: 14px;">
-            Las firmas autógrafas/digitales estampadas en el presente instrumento dan fe de la asistencia, acuerdos convenidos y conformidad de los titulares y representantes de las distintas Unidades Médicas y Administrativas del OOAD Sinaloa convocados a la sesión de trabajo.
-          </p>
+            <!-- TABLA 2: TEMAS TRATADOS (LIBRE / EN BLANCO SEGÚN INSTRUCCIÓN) -->
+            <table>
+              <tr>
+                <td class="title-shd-2">Temas tratados</td>
+              </tr>
+              <tr style="height: 85px; vertical-align: top;">
+                <td style="padding: 10px; color: #555;">&nbsp;<br><br><br><br></td>
+              </tr>
+            </table>
+
+            <!-- TABLA 3: COMPROMISOS Y ACUERDOS (LIBRES / EN BLANCO SEGÚN INSTRUCCIÓN) -->
+            <table>
+              <tr>
+                <td style="width: 6%;" class="th-shd-3">No.</td>
+                <td style="width: 50%;" class="th-shd-3">Compromisos y acuerdos</td>
+                <td style="width: 24%;" class="th-shd-3">Responsable</td>
+                <td style="width: 20%;" class="th-shd-3">Fecha compromiso</td>
+              </tr>
+              <tr style="height: 32px;">
+                <td style="text-align: center; font-weight: bold;">01</td>
+                <td></td>
+                <td></td>
+                <td style="text-align: center;"></td>
+              </tr>
+              <tr style="height: 32px;">
+                <td style="text-align: center; font-weight: bold;">02</td>
+                <td></td>
+                <td></td>
+                <td style="text-align: center;"></td>
+              </tr>
+              <tr style="height: 32px;">
+                <td style="text-align: center; font-weight: bold;">03</td>
+                <td></td>
+                <td></td>
+                <td style="text-align: center;"></td>
+              </tr>
+              <tr style="height: 32px;">
+                <td style="text-align: center; font-weight: bold;">04</td>
+                <td></td>
+                <td></td>
+                <td style="text-align: center;"></td>
+              </tr>
+            </table>
+          </div>
         </body>
         </html>
       `;
@@ -1916,7 +2009,7 @@
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `Minuta_Competitividad_Sinaloa_${new Date().toISOString().slice(0,10)}.doc`;
+      a.download = `Minuta_Asesoria_MC_${new Date().toISOString().slice(0,10)}.doc`;
       document.body.appendChild(a);
       a.click();
       a.remove();
