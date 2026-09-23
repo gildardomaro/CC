@@ -1021,58 +1021,14 @@
 
         <div class="section-title" style="margin-top: 10px;">
           <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
-          Asuntos e Indicadores de la Sesión
+          Asuntos de la Sesión
         </div>
 
-        <!-- 4. Asuntos Relevantes -->
+        <!-- 5. Asuntos Relevantes (Opcional) -->
         <div class="form-group">
-          <label for="asuntos">5. Asuntos relevantes a presentar en la reunión<span class="required-tag">*</span></label>
-          <textarea id="asuntos" name="asuntos" placeholder="Describe brevemente los puntos o temas a someter ante el Cuerpo de Gobierno o Comité..." required></textarea>
-        </div>
-
-        <div class="grid-2">
-          <!-- 5. Indicadores a Informar -->
-          <div class="form-group">
-            <label for="indicador">6. Indicador a informar (Opcional)</label>
-            <select id="indicador" name="indicador">
-              <option value="">-- Selecciona un indicador hospitalario si aplica --</option>
-              <option value="Sin reporte de Indicadores">Sin reporte de Indicadores</option>
-              <option value="Nivel de satisfacción con la atención médica">Nivel de satisfacción con la atención médica</option>
-              <option value="Trato brindado en la unidad médica">Trato brindado en la unidad médica</option>
-              <option value="Tiempos de espera">Tiempos de espera</option>
-              <option value="Surtimiento de medicamentos">Surtimiento de medicamentos</option>
-              <option value="% de Quejas.">% de Quejas.</option>
-              <option value="CVE 07 Tasa de Hospitalización por Diabetes Mellitus no controlada con complicaciones de corto plazo (PROSESA)">CVE 07 Tasa de Hosp. por Diabetes Mellitus</option>
-              <option value="CVE 08 Porcentaje de Egresos Hospitalarios con diagnóstico de Enfermedades Hipertensivas (EH) con complicaciones">CVE 08 Egresos por Enfermedades Hipertensivas (EH/EVC/EIC)</option>
-              <option value="CAISN 01 Porcentaje de pacientes con estancia prolongada (más de 12 horas) en urgencias">CAISN 01 Estancia prolongada (>12h) en Urgencias</option>
-              <option value="CAISN 06 Porcentaje de Ocupación Hospitalaria en Unidades de Segundo Nivel">CAISN 06 Porcentaje de Ocupación Hospitalaria</option>
-              <option value="CVE 01 Indice de la notificación inmediata de casos nuevos sujetos a Vigilancia Epidemiológica">CVE 01 Vigilancia Epidemiológica y Brotes</option>
-              <option value="IN_AAS01 Tasa de Infecciones Asociadas a la Atención a la Salud por 1,000 días estancia">IN_AAS01 Tasa IAAS por 1,000 días estancia</option>
-              <option value="CAISN 11 Porcentaje de ocupación de las Salas Quirúrgicas">CAISN 11 Ocupación de Salas Quirúrgicas</option>
-              <option value="CAISN 13 Oportunidad quirúrgica en cirugías electivas realizadas (<= 20 días hábiles)">CAISN 13 Oportunidad quirúrgica (<= 20 días)</option>
-              <option value="CAISN 14 Oportunidad en la programación de la consulta de especialidades (<= 20 días)">CAISN 14 Oportunidad Consulta Especialidades</option>
-              <option value="CAISN 23 Índice de subsecuencia en la consulta de medicina de rehabilitación">CAISN 23 Índice de subsecuencia en Rehabilitación</option>
-              <option value="CAISN 10 Tasa de mortalidad hospitalaria">CAISN 10 Tasa de mortalidad hospitalaria</option>
-              <option value="CVE 03 Tasa de Letalidad Hospitalaria asociada a Neumonía">CVE 03 Tasa de Letalidad Neumonía</option>
-              <option value="Ausentismo no programado.">Ausentismo no programado</option>
-              <option value="Nivel integral de limpieza.">Nivel integral de limpieza</option>
-              <option value="Porcentaje de implementación de Programas Internos de Protección Civil.">Protección Civil</option>
-              <option value="Generación de RPBI.">Generación de RPBI</option>
-              <option value="Eficacia y productividad del control de ambientes físicos.">Control de ambientes físicos</option>
-              <option value="Mantenimiento y operación de equipos.">Mantenimiento y operación de equipos</option>
-              <option value="Porcentaje de expedición de recetas electrónicas.">Expedición de recetas electrónicas</option>
-              <option value="Porcentaje de emisión de recetas resurtibles en SIMF.">Recetas resurtibles en SIMF</option>
-              <option value="Nivel de conservación de la unidad">Nivel de conservación de la unidad</option>
-              <option value="Suministro de Fluidos y Energéticos">Suministro de Fluidos y Energéticos</option>
-              <option value="Tasa de infección nosocomial en UCI">Tasa de infección nosocomial en UCI</option>
-            </select>
-          </div>
-
-          <!-- 6. Porcentaje Actual -->
-          <div class="form-group">
-            <label for="porcentaje">7. Porcentaje actual de cumplimiento (Opcional)</label>
-            <input type="text" id="porcentaje" name="porcentaje" placeholder="Ej. 94.5% o Meta alcanzada">
-          </div>
+          <label for="asuntos">5. Asuntos relevantes a presentar en la reunión (Opcional)</label>
+          <textarea id="asuntos" name="asuntos" placeholder="Describe brevemente los puntos o temas a presentar si aplica (opcional)..."></textarea>
+          <div class="helper-text">Campo opcional. Puedes dejarlo en blanco si solo estás registrando tu asistencia.</div>
         </div>
 
         <div class="section-title" style="margin-top: 10px;">
@@ -1463,9 +1419,9 @@
       const unidad = form.unidad ? form.unidad.value : 'COORDINACIÓN DE COMPETITIVIDAD';
       const cargo = form.cargo.value.trim().toUpperCase();
       const matricula = form.matricula.value.trim();
-      const asuntos = form.asuntos.value.trim();
-      const indicador = form.indicador.value;
-      const porcentaje = form.porcentaje.value.trim();
+      const asuntos = (form.asuntos && form.asuntos.value) ? form.asuntos.value.trim() : '';
+      const indicador = (form.indicador && form.indicador.value) ? form.indicador.value : '';
+      const porcentaje = (form.porcentaje && form.porcentaje.value) ? form.porcentaje.value.trim() : '';
       
       // Obtener firma en PNG transparente optimizado
       const firmaBase64 = canvas.toDataURL('image/png');
@@ -1478,7 +1434,7 @@
         unidad: unidad,
         cargo: cargo,
         matricula: matricula,
-        asuntos: asuntos,
+        asuntos: asuntos || 'Sin asuntos particulares',
         indicador: indicador || 'Sin reporte',
         porcentaje: porcentaje || 'N/A',
         firma: firmaBase64
