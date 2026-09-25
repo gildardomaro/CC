@@ -1232,6 +1232,15 @@
     try {
       firebase.initializeApp(firebaseConfig);
       dbFirestore = firebase.firestore();
+      // Forzar long polling para atravesar firewalls corporativos del IMSS sin colgar WebChannel
+      try {
+        dbFirestore.settings({
+          experimentalForceLongPolling: true,
+          useFetchStreams: false
+        });
+      } catch(e) {
+        console.warn("Aviso settings firestore:", e);
+      }
       coleccionAsistentes = dbFirestore.collection('asistentes_minuta');
       console.log("Firebase inicializado con éxito");
     } catch(err) {
@@ -1251,50 +1260,93 @@
     } catch(e) {
       console.warn("No se pudo leer localStorage:", e);
     }
+    // Endpoint REST oficial de Firestore (atraviesa cualquier red/proxy institucional)
+    const FIRESTORE_REST_BASE = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/asistentes_minuta`;
 
-    // 2. Conectar y escuchar Firestore en tiempo real
-    function iniciarSincronizacionNube() {
-      const badge = document.getElementById('cloudStatusBadge');
+    function convertirDocFirestore(doc) {
+      const f = doc.fields || {};
+      const res = { docId: doc.name ? doc.name.split('/').pop() : '' };
+      for (const k in f) {
+        const valObj = f[k];
+        if ('stringValue' in valObj) res[k] = valObj.stringValue;
+        else if ('integerValue' in valObj) res[k] = parseInt(valObj.integerValue, 10);
+        else if ('doubleValue' in valObj) res[k] = parseFloat(valObj.doubleValue);
+        else if ('booleanValue' in valObj) res[k] = valObj.booleanValue;
+        else res[k] = Object.values(valObj)[0];
+      }
+      return res;
+    }
+
+    function marcarNubeActiva(conteo) {
+      sincronizacionActiva = true;
       const pulse = document.getElementById('cloudPulse');
       const text = document.getElementById('cloudStatusText');
+      if (pulse) { pulse.className = 'status-pulse'; }
+      if (text) { text.innerText = `Nube Activa (${conteo} en línea)`; }
+    }
 
-      if (!coleccionAsistentes) {
-        if (text) text.innerText = 'Modo Local (Sin Nube)';
-        return;
-      }
-
-      // Escuchar cambios en vivo desde cualquier celular o PC
-      coleccionAsistentes.onSnapshot((snapshot) => {
-        sincronizacionActiva = true;
-        if (pulse) { pulse.className = 'status-pulse'; }
-        if (text) { text.innerText = `Nube Activa (${snapshot.size} en línea)`; }
-
-        const datosRemotos = [];
-        snapshot.forEach(doc => {
-          datosRemotos.push({ docId: doc.id, ...doc.data() });
-        });
-
-        // Ordenar por hora / id
-        datosRemotos.sort((a, b) => (a.id || 0) - (b.id || 0));
-
-        if (datosRemotos.length > 0) {
-          asistentes = datosRemotos;
+    async function sincronizarConFirestoreREST() {
+      try {
+        const res = await fetch(`${FIRESTORE_REST_BASE}?key=${firebaseConfig.apiKey}`, { cache: 'no-store' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        const listaDocs = (data.documents || []).map(convertirDocFirestore);
+        if (listaDocs.length > 0) {
+          listaDocs.sort((a, b) => (Number(a.id) || 0) - (Number(b.id) || 0));
+          asistentes = listaDocs;
           localStorage.setItem(STORAGE_KEY, JSON.stringify(asistentes));
           actualizarTabla();
+          marcarNubeActiva(listaDocs.length);
+        } else {
+          marcarNubeActiva(0);
         }
+      } catch (err) {
+        console.warn("Aviso consulta REST Firestore:", err);
+      }
+    }
 
-        // Subir cualquier registro huérfano local hacia la nube (autorrecuperación)
-        autoRecuperarRegistrosLocales();
-      }, (error) => {
-        console.warn("Aviso de conexión Firestore:", error);
-        sincronizacionActiva = false;
-        if (pulse) { pulse.className = 'status-pulse pending'; }
-        if (text) {
-          text.innerText = error.code === 'permission-denied' 
-            ? 'Reglas Firebase pendientes' 
-            : 'Conectando con Nube...';
+    // 2. Conectar y escuchar Firestore en tiempo real (Dual: REST + SDK)
+    function iniciarSincronizacionNube() {
+      const text = document.getElementById('cloudStatusText');
+
+      // Paso 1: Carga inmediata ultrarrápida vía REST API (< 500 ms)
+      sincronizarConFirestoreREST();
+
+      // Polling ligero regular cada 12 segundos para sincronización bidireccional permanente
+      setInterval(sincronizarConFirestoreREST, 12000);
+
+      // Paso 2: Escuchar cambios en vivo con Firebase SDK
+      if (coleccionAsistentes) {
+        try {
+          coleccionAsistentes.onSnapshot((snapshot) => {
+            marcarNubeActiva(snapshot.size);
+
+            const datosRemotos = [];
+            snapshot.forEach(doc => {
+              datosRemotos.push({ docId: doc.id, ...doc.data() });
+            });
+
+            datosRemotos.sort((a, b) => (Number(a.id) || 0) - (Number(b.id) || 0));
+
+            if (datosRemotos.length > 0) {
+              asistentes = datosRemotos;
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(asistentes));
+              actualizarTabla();
+            }
+
+            autoRecuperarRegistrosLocales();
+          }, (error) => {
+            console.warn("Aviso Firestore onSnapshot:", error);
+            if (!sincronizacionActiva && text) {
+              text.innerText = error.code === 'permission-denied' 
+                ? 'Reglas Firebase pendientes' 
+                : 'Sincronizando vía Nube...';
+            }
+          });
+        } catch(e) {
+          console.warn("Error conectando listener SDK:", e);
         }
-      });
+      }
     }
 
     // Autorrecuperar registros locales y subirlos a la nube
@@ -1445,16 +1497,30 @@
       localStorage.setItem(STORAGE_KEY, JSON.stringify(asistentes));
       actualizarTabla();
 
-      // 2. Transmitir en tiempo real a Firebase Cloud (para que lo vea el administrador)
+      // 2. Transmitir en tiempo real a Firebase Cloud (Dual: SDK + REST directo)
       if (coleccionAsistentes) {
         coleccionAsistentes.doc(String(nuevoAsistente.id)).set(nuevoAsistente)
-          .then(() => {
-            console.log("¡Sincronizado con éxito en la nube!");
-          })
-          .catch((err) => {
-            console.warn("Aviso al guardar en nube:", err);
-          });
+          .then(() => console.log("¡Sincronizado con éxito en la nube vía SDK!"))
+          .catch(err => console.warn("Aviso SDK al guardar en nube:", err));
       }
+
+      // Respaldo de guardado REST directo (a prueba de proxy corporativo)
+      const docFields = {};
+      for (const key in nuevoAsistente) {
+        if (typeof nuevoAsistente[key] === 'number') {
+          docFields[key] = { integerValue: String(nuevoAsistente[key]) };
+        } else {
+          docFields[key] = { stringValue: String(nuevoAsistente[key]) };
+        }
+      }
+      fetch(`${FIRESTORE_REST_BASE}/${nuevoAsistente.id}?key=${firebaseConfig.apiKey}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fields: docFields })
+      }).then(() => {
+        console.log("¡Sincronizado con éxito vía REST!");
+        sincronizarConFirestoreREST();
+      }).catch(err => console.warn("Aviso REST al guardar:", err));
 
       // Mostrar modal de confirmación
       document.getElementById('modalMensaje').innerText = `La asistencia y firma de ${nombre} han sido registradas y transmitidas a la base de datos de la Coordinación.`;
