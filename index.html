@@ -843,6 +843,13 @@
       border: 1px solid rgba(255, 255, 255, 0.3);
       color: #ffffff;
       backdrop-filter: blur(6px);
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.2s ease;
+    }
+    .cloud-badge-box:hover {
+      background: rgba(255, 255, 255, 0.28);
+      transform: translateY(-1px);
     }
     .status-pulse {
       width: 9px;
@@ -855,6 +862,10 @@
     .status-pulse.pending {
       background: #f1b44c;
       box-shadow: 0 0 0 0 rgba(241, 180, 76, 0.7);
+    }
+    .status-pulse.error {
+      background: #ff4d4f;
+      box-shadow: 0 0 0 0 rgba(255, 77, 79, 0.7);
     }
     @keyframes pulse {
       0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7); }
@@ -886,7 +897,7 @@
           <span><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/></svg> <span id="fechaActual">22 de septiembre de 2026</span></span>
           <span><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z"/></svg> Modelo Institucional para la Competitividad (MC)</span>
         </div>
-        <div class="cloud-badge-box" id="cloudStatusBadge">
+        <div class="cloud-badge-box" id="cloudStatusBadge" onclick="forzarSincronizacionManual()" title="Clic para actualizar o forzar reconexión con Firebase">
           <div class="status-pulse pending" id="cloudPulse"></div>
           <span id="cloudStatusText">Conectando nube Firebase...</span>
         </div>
@@ -1236,7 +1247,8 @@
       try {
         dbFirestore.settings({
           experimentalForceLongPolling: true,
-          useFetchStreams: false
+          experimentalAutoDetectLongPolling: false,
+          merge: true
         });
       } catch(e) {
         console.warn("Aviso settings firestore:", e);
@@ -1285,16 +1297,48 @@
       if (text) { text.innerText = `Nube Activa (${conteo} en línea)`; }
     }
 
-    async function sincronizarConFirestoreREST() {
+    function marcarNubeDesconectada(motivo) {
+      const pulse = document.getElementById('cloudPulse');
+      const text = document.getElementById('cloudStatusText');
+      if (pulse) { pulse.className = 'status-pulse pending'; }
+      if (text) {
+        const total = asistentes.length;
+        text.innerText = total > 0 
+          ? `Modo Local (${total} en memoria) • Clic reconectar` 
+          : `Sin conexión • Clic reconectar`;
+      }
+    }
+
+    async function sincronizarConFirestoreREST(esManual = false) {
+      const text = document.getElementById('cloudStatusText');
+      const pulse = document.getElementById('cloudPulse');
+      if (esManual && text) {
+        text.innerText = "Sincronizando con Firebase...";
+        if (pulse) pulse.className = "status-pulse pending";
+      }
+
       try {
-        const res = await fetch(`${FIRESTORE_REST_BASE}?key=${firebaseConfig.apiKey}`, { cache: 'no-store' });
+        // Timeout de 6 segundos para evitar que la red corporativa o proxy cuelgue la petición
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 6000);
+        const res = await fetch(`${FIRESTORE_REST_BASE}?key=${firebaseConfig.apiKey}`, {
+          cache: 'no-store',
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         const listaDocs = (data.documents || []).map(convertirDocFirestore);
+
         if (listaDocs.length > 0) {
           listaDocs.sort((a, b) => (Number(a.id) || 0) - (Number(b.id) || 0));
           asistentes = listaDocs;
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(asistentes));
+          try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(asistentes));
+          } catch(e) {
+            console.warn("Storage warning:", e);
+          }
           actualizarTabla();
           marcarNubeActiva(listaDocs.length);
         } else {
@@ -1302,14 +1346,22 @@
         }
       } catch (err) {
         console.warn("Aviso consulta REST Firestore:", err);
+        if (!sincronizacionActiva) {
+          marcarNubeDesconectada(err.name === 'AbortError' ? 'Tiempo agotado' : 'Sin red');
+        }
       }
+    }
+
+    function forzarSincronizacionManual() {
+      sincronizarConFirestoreREST(true);
+      autoRecuperarRegistrosLocales();
     }
 
     // 2. Conectar y escuchar Firestore en tiempo real (Dual: REST + SDK)
     function iniciarSincronizacionNube() {
       const text = document.getElementById('cloudStatusText');
 
-      // Paso 1: Carga inmediata ultrarrápida vía REST API (< 500 ms)
+      // Paso 1: Carga inmediata ultrarrápida vía REST API con timeout seguro (< 500 ms)
       sincronizarConFirestoreREST();
 
       // Polling ligero regular cada 12 segundos para sincronización bidireccional permanente
@@ -1330,7 +1382,9 @@
 
             if (datosRemotos.length > 0) {
               asistentes = datosRemotos;
-              localStorage.setItem(STORAGE_KEY, JSON.stringify(asistentes));
+              try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(asistentes));
+              } catch(e) {}
               actualizarTabla();
             }
 
@@ -2178,7 +2232,18 @@
       a.remove();
     }
 
+    // Actualizar fecha en cabecera automáticamente con fecha local
+    function actualizarFechaCabecera() {
+      const elemFecha = document.getElementById('fechaActual');
+      if (elemFecha) {
+        const hoy = new Date();
+        const opciones = { day: 'numeric', month: 'long', year: 'numeric' };
+        elemFecha.innerText = hoy.toLocaleDateString('es-MX', opciones);
+      }
+    }
+
     // Inicializar estado de administración y tabla si había registros
+    actualizarFechaCabecera();
     actualizarVistaAdmin();
     actualizarTabla();
     iniciarSincronizacionNube();
