@@ -2198,7 +2198,13 @@
         alert("No hay asistentes para exportar.");
         return;
       }
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(asistentes, null, 2));
+      const paqueteExportacion = {
+        fecha: document.getElementById('fechaActual') ? document.getElementById('fechaActual').innerText : new Date().toLocaleDateString('es-MX'),
+        unidad: (asistentes.length > 0 && asistentes[0].unidad) ? asistentes[0].unidad : "COORDINACIÓN DE COMPETITIVIDAD EN SINALOA",
+        ciudad: "LOS MOCHIS, SINALOA",
+        asistentes: asistentes
+      };
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(paqueteExportacion, null, 2));
       const a = document.createElement('a');
       a.setAttribute("href", dataStr);
       a.setAttribute("download", `asistentes_competitividad_sinaloa_${new Date().toISOString().slice(0,10)}.json`);
