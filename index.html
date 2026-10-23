@@ -1510,6 +1510,7 @@
     let minutas = [];
     let minutaActualSeleccionada = null;
     let filtroMinutaActivo = 'TODAS';
+    let minutaEnEdicionId = null;
 
     let sincronizacionActiva = false;
     let estaSincronizando = false;
@@ -1727,14 +1728,7 @@
 
         // Sincronizar Minutas
         if (docsMinutas.length > 0) {
-          docsMinutas.forEach(dm => {
-            const idx = minutas.findIndex(m => String(m.id) === String(dm.id || dm.docId));
-            if (idx >= 0) {
-              minutas[idx] = { ...minutas[idx], ...dm };
-            } else {
-              minutas.push(dm);
-            }
-          });
+          minutas = docsMinutas;
           try { localStorage.setItem(MINUTAS_STORAGE_KEY, JSON.stringify(minutas)); } catch(e) {}
           actualizarListaMinutasAdmin();
           poblarSelectorMinutas();
@@ -2073,6 +2067,44 @@
         }
       } catch(e) {}
 
+      // MODO EDICIÓN DE MINUTA EXISTENTE
+      if (minutaEnEdicionId) {
+        const idx = minutas.findIndex(item => item.id === minutaEnEdicionId);
+        if (idx !== -1) {
+          minutas[idx].titulo = titulo;
+          minutas[idx].unidad = unidad;
+          minutas[idx].fecha = fechaVal;
+          minutas[idx].fechaTexto = fechaTexto;
+          minutas[idx].lugar = lugar;
+          minutas[idx].folio = folio;
+          minutas[idx].objetivo = objetivo;
+          minutas[idx].acuerdos = acuerdos;
+
+          const minutaEditada = minutas[idx];
+          try { localStorage.setItem(MINUTAS_STORAGE_KEY, JSON.stringify(minutas)); } catch(e) {}
+
+          fetch(`${FIRESTORE_REST_BASE}/${minutaEnEdicionId}?key=${firebaseConfig.apiKey}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(serializarDocFirestore(minutaEditada))
+          }).then(() => {
+            console.log("Minuta actualizada en Firestore exitosamente");
+          }).catch(err => console.warn("Aviso actualizar minuta en nube:", err));
+
+          alert(`¡Minuta "${titulo}" modificada y actualizada exitosamente!`);
+          cancelarEdicionMinuta();
+          actualizarListaMinutasAdmin();
+          poblarSelectorMinutas();
+          actualizarTabla();
+          if (minutaActualSeleccionada && minutaActualSeleccionada.id === minutaEditada.id) {
+            minutaActualSeleccionada = minutaEditada;
+            alCambiarMinutaSeleccionada(minutaEditada.id);
+          }
+          return;
+        }
+      }
+
+      // MODO CREACIÓN DE NUEVA MINUTA
       const nuevaMinuta = {
         id: "minuta_" + Date.now(),
         tipo: "minuta",
@@ -2109,12 +2141,128 @@
       actualizarTabla();
     }
 
+    function editarMinutaAdmin(minutaId) {
+      if (!isAdminAuthed) {
+        abrirModalAdmin(() => editarMinutaAdmin(minutaId));
+        return;
+      }
+      const m = minutas.find(item => item.id === minutaId);
+      if (!m) return;
+
+      minutaEnEdicionId = m.id;
+
+      document.getElementById('minutaTituloInput').value = m.titulo || '';
+      document.getElementById('minutaUnidadSelect').value = m.unidad || 'Todas las Unidades';
+      document.getElementById('minutaFechaInput').value = m.fecha || new Date().toISOString().slice(0, 10);
+      document.getElementById('minutaLugarInput').value = m.lugar || 'SALA DE JUNTAS / REUNIÓN VIRTUAL';
+      document.getElementById('minutaFolioInput').value = m.folio || '002';
+      document.getElementById('minutaObjetivoInput').value = m.objetivo || '';
+
+      const contenedor = document.getElementById('contenedorAcuerdosAdmin');
+      if (contenedor) {
+        contenedor.innerHTML = '';
+        const acs = m.acuerdos || [];
+        if (acs.length === 0) {
+          agregarFilaAcuerdoAdmin('', '', '');
+        } else {
+          acs.forEach(ac => {
+            agregarFilaAcuerdoAdmin(ac.compromiso || '', ac.responsable || '', ac.fechaCompromiso || '');
+          });
+        }
+      }
+
+      const banner = document.getElementById('bannerModoEdicionMinuta');
+      const spanTit = document.getElementById('bannerTituloEdicion');
+      const btnSubmit = document.getElementById('btnSubmitMinuta');
+      const btnCancelar = document.getElementById('btnCancelarEdicionMinuta');
+
+      if (banner) banner.style.display = 'flex';
+      if (spanTit) spanTit.innerText = `"${m.titulo}"`;
+      if (btnSubmit) btnSubmit.innerHTML = '💾 Actualizar Cambios de la Minuta';
+      if (btnCancelar) btnCancelar.style.display = 'inline-block';
+
+      const form = document.getElementById('formNuevaMinuta');
+      if (form) form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function cancelarEdicionMinuta() {
+      minutaEnEdicionId = null;
+      const form = document.getElementById('formNuevaMinuta');
+      if (form) form.reset();
+
+      const fechaInput = document.getElementById('minutaFechaInput');
+      if (fechaInput) fechaInput.value = new Date().toISOString().slice(0, 10);
+
+      const banner = document.getElementById('bannerModoEdicionMinuta');
+      const btnSubmit = document.getElementById('btnSubmitMinuta');
+      const btnCancelar = document.getElementById('btnCancelarEdicionMinuta');
+
+      if (banner) banner.style.display = 'none';
+      if (btnSubmit) btnSubmit.innerHTML = '💾 Guardar y Publicar Minuta en la Nube';
+      if (btnCancelar) btnCancelar.style.display = 'none';
+
+      const contenedor = document.getElementById('contenedorAcuerdosAdmin');
+      if (contenedor) {
+        contenedor.innerHTML = '';
+        agregarFilaAcuerdoAdmin("Elaboración y seguimiento del plan de trabajo específico", "Responsable del área", "15 días hábiles");
+        agregarFilaAcuerdoAdmin("Capacitación y difusión de directrices de competitividad", "Coordinación", "10 días hábiles");
+      }
+    }
+
+    function eliminarMinutaAdmin(minutaId) {
+      if (!isAdminAuthed) {
+        abrirModalAdmin(() => eliminarMinutaAdmin(minutaId));
+        return;
+      }
+
+      const m = minutas.find(item => item.id === minutaId);
+      if (!m) return;
+
+      const totalFirmas = asistentes.filter(a => a.minutaId === minutaId).length;
+      let confirmMsg = `¿Estás seguro de que deseas eliminar la minuta "${m.titulo}"?`;
+      if (totalFirmas > 0) {
+        confirmMsg += `\n\n⚠️ ATENCIÓN: Esta minuta tiene ${totalFirmas} firma(s) registrada(s). Si la eliminas, la minuta y sus acuerdos dejarán de estar disponibles en el sistema.`;
+      }
+
+      if (!confirm(confirmMsg)) return;
+
+      if (minutaEnEdicionId === minutaId) {
+        cancelarEdicionMinuta();
+      }
+
+      minutas = minutas.filter(item => item.id !== minutaId);
+      try { localStorage.setItem(MINUTAS_STORAGE_KEY, JSON.stringify(minutas)); } catch(e) {}
+
+      fetch(`${FIRESTORE_REST_BASE}/${minutaId}?key=${firebaseConfig.apiKey}`, {
+        method: 'DELETE'
+      }).then(() => {
+        console.log("Minuta eliminada de Firestore exitosamente");
+      }).catch(err => console.warn("Aviso al eliminar minuta en nube:", err));
+
+      if (minutaActualSeleccionada && minutaActualSeleccionada.id === minutaId) {
+        minutaActualSeleccionada = minutas.length > 0 ? minutas[0] : null;
+      }
+
+      if (filtroMinutaActivo === minutaId) {
+        filtroMinutaActivo = 'TODAS';
+        const filtro = document.getElementById('filtroMinutaSelect');
+        if (filtro) filtro.value = 'TODAS';
+      }
+
+      actualizarListaMinutasAdmin();
+      poblarSelectorMinutas();
+      actualizarTabla();
+      actualizarAcuerdosDebajoLista(minutaActualSeleccionada);
+
+      alert(`La minuta "${m.titulo}" ha sido eliminada del sistema.`);
+    }
+
     function actualizarListaMinutasAdmin() {
       const cont = document.getElementById('listaMinutasAdminContainer');
       if (!cont) return;
 
       if (minutas.length === 0) {
-        cont.innerHTML = '<div style="color:#777; font-size:0.85rem;">No hay minutas registradas aún.</div>';
+        cont.innerHTML = '<div style="color:#777; font-size:0.85rem; padding:12px; text-align:center;">No hay minutas registradas aún.</div>';
         return;
       }
 
@@ -2123,20 +2271,26 @@
         const totalAcuerdos = (m.acuerdos || []).length;
         return `
           <div style="background:#f7faf8; border:1px solid #d3e5dc; border-radius:6px; padding:10px 14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-            <div>
-              <div style="font-weight:700; color:var(--imss-green-dark); font-size:0.9rem;">
+            <div style="flex: 1; min-width: 250px;">
+              <div style="font-weight:700; color:var(--imss-green-dark); font-size:0.92rem;">
                 📌 ${escapeHtml(m.titulo)}
               </div>
               <div style="font-size:0.8rem; color:#555; margin-top:2px;">
                 Unidad: <strong>${escapeHtml(m.unidad)}</strong> • Fecha: ${m.fechaTexto || m.fecha} • ${totalAcuerdos} acuerdos registrados
               </div>
             </div>
-            <div style="display:flex; align-items:center; gap:8px;">
+            <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
               <span class="badge-minuta-tag" style="background:#eaf4ee; color:#006341; font-weight:700;">
                 ✍️ ${totalFirmas} Firmas
               </span>
-              <button type="button" class="btn-secondary" style="padding:4px 10px; font-size:0.78rem;" onclick="seleccionarMinutaParaVer('${m.id}')">
+              <button type="button" class="btn-secondary" style="padding:5px 10px; font-size:0.78rem;" onclick="seleccionarMinutaParaVer('${m.id}')" title="Ver asistentes de esta minuta">
                 Ver Asistentes
+              </button>
+              <button type="button" class="btn-secondary" style="padding:5px 10px; font-size:0.78rem; background:#edf7ed; border-color:#81c784; color:#1b5e20; font-weight:700;" onclick="editarMinutaAdmin('${m.id}')" title="Modificar acuerdos o datos de esta minuta">
+                ✏️ Modificar
+              </button>
+              <button type="button" class="btn-secondary" style="padding:5px 10px; font-size:0.78rem; background:#fdf2f2; border-color:#f5c2c7; color:#d93025; font-weight:700;" onclick="eliminarMinutaAdmin('${m.id}')" title="Eliminar minuta">
+                🗑️ Eliminar
               </button>
             </div>
           </div>
@@ -3038,6 +3192,16 @@
 
       <!-- FORMULARIO DE NUEVA MINUTA -->
       <form id="formNuevaMinuta" onsubmit="guardarNuevaMinuta(event)">
+        <!-- BANNER DE MODO EDICIÓN -->
+        <div id="bannerModoEdicionMinuta" style="display: none; background: #fff8e1; border: 1.5px solid #ffe082; color: #795548; padding: 10px 14px; border-radius: var(--radius-sm); margin-bottom: 14px; font-size: 0.88rem; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+          <div>
+            <strong style="color: #b78103;">✏️ Modo Edición:</strong> Modificando <span id="bannerTituloEdicion" style="font-weight: 700; color: #2e382d;">...</span>
+          </div>
+          <button type="button" onclick="cancelarEdicionMinuta()" style="background: #ffffff; border: 1px solid #dcdcdc; border-radius: 4px; padding: 4px 10px; font-size: 0.78rem; cursor: pointer; font-weight: 600; color: #555;">
+            ✕ Cancelar Edición
+          </button>
+        </div>
+
         <div class="grid-2">
           <div class="form-group full">
             <label for="minutaTituloInput">Nombre o Asunto de la Reunión:<span class="required-tag">*</span></label>
@@ -3106,9 +3270,12 @@
           <!-- Filas dinámicas de acuerdos -->
         </div>
 
-        <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 22px; border-top: 1px solid #e1e7e4; padding-top: 14px;">
+        <div style="display: flex; gap: 12px; justify-content: flex-end; align-items: center; margin-top: 22px; border-top: 1px solid #e1e7e4; padding-top: 14px; flex-wrap: wrap;">
+          <button type="button" id="btnCancelarEdicionMinuta" onclick="cancelarEdicionMinuta()" class="btn-secondary" style="display: none; background: #f5f5f5; color: #666;">
+            Cancelar Edición
+          </button>
           <button type="button" class="btn-secondary" onclick="cerrarModalAdminMinutas()">Cerrar</button>
-          <button type="submit" class="btn-submit" style="padding: 11px 26px;">
+          <button type="submit" id="btnSubmitMinuta" class="btn-submit" style="padding: 11px 26px;">
             💾 Guardar y Publicar Minuta en la Nube
           </button>
         </div>
