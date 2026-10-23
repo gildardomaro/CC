@@ -1200,55 +1200,15 @@
             </select>
             <div class="helper-text">Listado actualizado con las reuniones y acuerdos convocados por la Coordinación / Unidad.</div>
 
-            <!-- TARJETA VISUAL DE ACUERDOS DE LA MINUTA SELECCIONADA -->
-            <div id="minutaCardPreview" class="minuta-card-preview" style="display: none;">
-              <div class="minuta-header-row">
-                <div>
-                  <div class="minuta-title-badge" id="previewMinutaTitulo">
-                    <span>📌</span> <span id="previewTituloTexto">Cargando minuta...</span>
-                  </div>
-                  <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 4px;" id="previewMinutaSub">
-                    Unidad: <strong id="previewUnidadTexto">HGZ 49 Los Mochis</strong> • Folio: <span id="previewFolioTexto">002</span>
-                  </div>
-                </div>
-                <div style="display: flex; gap: 8px; align-items: center;">
-                  <span class="minuta-meta-tag" id="previewFechaTag">📅 Fecha: 23/10/2026</span>
-                  <span class="badge-admin" style="background:#e6f4ea; color:#188038;" id="previewEstadoTag">● Abierta para firmas</span>
-                </div>
+            <!-- CÁPSULA LIGERA DE CONFIRMACIÓN DE MINUTA -->
+            <div id="minutaMiniInfo" style="margin-top: 8px; display: none; align-items: center; justify-content: space-between; background: #eaf4ee; border: 1.5px solid #b8d8c8; border-radius: var(--radius-sm); padding: 9px 14px; font-size: 0.84rem; flex-wrap: wrap; gap: 6px;">
+              <div>
+                <strong style="color: var(--imss-green-dark);" id="miniInfoTitulo">📌 Minuta: ...</strong>
+                <span style="color: #444; margin-left: 8px;" id="miniInfoFecha">📅 Fecha: ...</span>
               </div>
-
-              <div style="font-size: 0.84rem; color: #333; margin-bottom: 8px; line-height: 1.4;">
-                <strong>Objetivo / Lugar:</strong> <span id="previewObjetivoTexto">Seguimiento a compromisos e indicadores del Modelo Institucional para la Competitividad (MC).</span>
-              </div>
-
-              <!-- TABLA DE ACUERDOS Y COMPROMISOS -->
-              <div style="font-size: 0.84rem; font-weight: 700; color: var(--imss-green-dark); margin-top: 10px; margin-bottom: 4px;">
-                📋 Compromisos y Acuerdos a suscribir con tu firma:
-              </div>
-              <table class="minuta-acuerdos-table">
-                <thead>
-                  <tr>
-                    <th style="width: 38px; text-align: center;">No.</th>
-                    <th>Compromisos y Acuerdos</th>
-                    <th style="width: 32%;">Responsable</th>
-                    <th style="width: 18%; text-align: center;">Fecha Compromiso</th>
-                  </tr>
-                </thead>
-                <tbody id="previewAcuerdosBody">
-                  <!-- Filas dinámicas de acuerdos -->
-                </tbody>
-              </table>
-
-              <!-- BARRA DE ASISTENTES FIRMANTES -->
-              <div class="minuta-firmantes-bar">
-                <div style="font-size: 0.84rem; color: #234e38; font-weight: 600;" id="previewFirmantesConteo">
-                  👥 0 asistentes han firmado esta minuta hasta el momento.
-                </div>
-                <button type="button" class="btn-ver-firmantes" onclick="abrirModalFirmantesMinutaActual()">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
-                  Ver lista de compañeros que ya firmaron
-                </button>
-              </div>
+              <button type="button" onclick="switchTab('list')" style="background: transparent; border: none; color: var(--imss-green); font-weight: 700; cursor: pointer; text-decoration: underline; font-size: 0.82rem;">
+                📋 Ver acuerdos y quiénes ya firmaron en Asistentes →
+              </button>
             </div>
           </div>
 
@@ -1352,6 +1312,46 @@
       </div>
 
       <!-- PANEL DE ADMINISTRADOR: DESCARGA DE EXCEL, JSON Y MINUTA PROTEGIDA -->
+      
+      <!-- SECCIÓN: COMPROMISOS Y ACUERDOS DE LA REUNIÓN (DEBAJO DE LA LISTA DE ASISTENTES) -->
+      <div id="cardAcuerdosEnAsistentes" style="margin-top: 24px; background: #ffffff; border: 1.5px solid #c2ded1; border-radius: var(--radius-md); padding: 22px 24px; box-shadow: 0 3px 12px rgba(0, 99, 65, 0.05);">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1.5px solid #d9e8e0; padding-bottom: 12px; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
+          <div>
+            <div style="font-family: 'Montserrat', sans-serif; font-size: 1.15rem; font-weight: 700; color: var(--imss-green-dark); display: flex; align-items: center; gap: 8px;">
+              <span>📋</span> Compromisos y Acuerdos de la Sesión
+            </div>
+            <div style="font-size: 0.88rem; color: #333; margin-top: 4px;" id="acuerdosAsuntoTitulo">
+              Reunión: <strong id="acuerdosTituloTxt">...</strong>
+            </div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;" id="acuerdosMetaTxt">
+              Unidad: <span id="acuerdosUnidadTxt">HGZ 49 Los Mochis</span> • Fecha: <span id="acuerdosFechaTxt">...</span>
+            </div>
+          </div>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <span class="minuta-meta-tag" id="acuerdosBadgeEstado" style="background: #e6f4ea; color: #188038; font-weight: 700;">● Acuerdos Oficiales</span>
+          </div>
+        </div>
+
+        <div style="font-size: 0.84rem; color: #444; margin-bottom: 10px; line-height: 1.4;">
+          <strong>Objetivo de los acuerdos:</strong> <span id="acuerdosObjetivoTxt">Seguimiento a compromisos e indicadores del Modelo Institucional para la Competitividad (MC).</span>
+        </div>
+
+        <table class="minuta-acuerdos-table" style="margin-bottom: 0;">
+          <thead>
+            <tr>
+              <th style="width: 40px; text-align: center;">No.</th>
+              <th>Compromisos y Acuerdos de la Reunión</th>
+              <th style="width: 32%;">Responsable</th>
+              <th style="width: 20%; text-align: center;">Fecha Compromiso</th>
+            </tr>
+          </thead>
+          <tbody id="tablaAcuerdosAsistentesBody">
+            <!-- Filas dinámicas de acuerdos -->
+          </tbody>
+        </table>
+      </div>
+
+
       <div class="admin-panel-card" id="adminPanelCard">
         <!-- VISTA BLOQUEADA (POR DEFECTO PARA USUARIOS NORMALES) -->
         <div id="adminLockedView" class="admin-locked-view">
@@ -1871,65 +1871,87 @@
     }
 
     function alCambiarMinutaSeleccionada(minutaId) {
-      const card = document.getElementById('minutaCardPreview');
+      const miniInfo = document.getElementById('minutaMiniInfo');
       if (!minutaId) {
         minutaActualSeleccionada = null;
-        if (card) card.style.display = 'none';
+        if (miniInfo) miniInfo.style.display = 'none';
         return;
       }
 
       const m = minutas.find(item => item.id === minutaId);
       if (!m) {
         minutaActualSeleccionada = null;
-        if (card) card.style.display = 'none';
+        if (miniInfo) miniInfo.style.display = 'none';
         return;
       }
 
       minutaActualSeleccionada = m;
-      if (card) card.style.display = 'block';
 
-      actualizarPreviewMinutaActual();
+      // Actualizar cápsula ligera en formulario de registro
+      if (miniInfo) {
+        miniInfo.style.display = 'flex';
+        const t = document.getElementById('miniInfoTitulo');
+        const f = document.getElementById('miniInfoFecha');
+        if (t) t.innerText = `📌 Minuta: ${m.titulo}`;
+        if (f) f.innerText = `📅 Fecha: ${m.fechaTexto || m.fecha || 'Hoy'}`;
+      }
+
+      // También sincronizar los acuerdos mostrados debajo de la lista de asistentes
+      actualizarAcuerdosDebajoLista(m);
     }
 
     function actualizarPreviewMinutaActual() {
-      if (!minutaActualSeleccionada) return;
-      const m = minutaActualSeleccionada;
+      if (minutaActualSeleccionada) {
+        actualizarAcuerdosDebajoLista(minutaActualSeleccionada);
+      }
+    }
 
-      const elemTitulo = document.getElementById('previewTituloTexto');
-      const elemUnidad = document.getElementById('previewUnidadTexto');
-      const elemFolio = document.getElementById('previewFolioTexto');
-      const elemFecha = document.getElementById('previewFechaTag');
-      const elemObjetivo = document.getElementById('previewObjetivoTexto');
-      const elemBody = document.getElementById('previewAcuerdosBody');
-      const elemFirmantes = document.getElementById('previewFirmantesConteo');
+    // RENDERIZAR COMPROMISOS Y ACUERDOS DEBAJO DE LA LISTA DE ASISTENTES
+    function actualizarAcuerdosDebajoLista(minutaObj = null) {
+      let m = minutaObj;
+      if (!m) {
+        if (filtroMinutaActivo && filtroMinutaActivo !== 'TODAS') {
+          m = minutas.find(item => item.id === filtroMinutaActivo);
+        } else if (minutaActualSeleccionada) {
+          m = minutaActualSeleccionada;
+        } else if (minutas.length > 0) {
+          m = minutas[0];
+        }
+      }
+
+      const card = document.getElementById('cardAcuerdosEnAsistentes');
+      if (!m) {
+        if (card) card.style.display = 'none';
+        return;
+      }
+
+      if (card) card.style.display = 'block';
+
+      const elemTitulo = document.getElementById('acuerdosTituloTxt');
+      const elemUnidad = document.getElementById('acuerdosUnidadTxt');
+      const elemFecha = document.getElementById('acuerdosFechaTxt');
+      const elemObjetivo = document.getElementById('acuerdosObjetivoTxt');
+      const elemBody = document.getElementById('tablaAcuerdosAsistentesBody');
 
       if (elemTitulo) elemTitulo.innerText = m.titulo || 'Sin asunto';
       if (elemUnidad) elemUnidad.innerText = m.unidad || 'Coordinación de Competitividad';
-      if (elemFolio) elemFolio.innerText = m.folio || '002';
-      if (elemFecha) elemFecha.innerText = `📅 Fecha: ${m.fechaTexto || m.fecha || 'Hoy'}`;
+      if (elemFecha) elemFecha.innerText = m.fechaTexto || m.fecha || 'Hoy';
       if (elemObjetivo) elemObjetivo.innerText = m.objetivo || 'Reunión de seguimiento institucional.';
 
-      // Acuerdos y compromisos de la reunión
       if (elemBody) {
         const acuerdos = m.acuerdos || [];
         if (acuerdos.length === 0) {
-          elemBody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#777; padding:10px;">El administrador no ha registrado acuerdos previos para esta minuta.</td></tr>';
+          elemBody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#777; padding:12px;">No se registraron acuerdos previos para esta minuta.</td></tr>';
         } else {
           elemBody.innerHTML = acuerdos.map((ac, i) => `
             <tr>
               <td style="text-align: center; font-weight: bold; color: var(--imss-green-dark);">${ac.numero || String(i + 1).padStart(2, '0')}</td>
-              <td style="font-weight: 500; color: #1a1a1a;">${escapeHtml(ac.compromiso)}</td>
-              <td style="color: #2b3034; font-weight: 600;">${escapeHtml(ac.responsable || 'Equipo de trabajo')}</td>
-              <td style="text-align: center; color: #004d32; font-weight: 600; white-space: nowrap;">${escapeHtml(ac.fechaCompromiso || '15 días hábiles')}</td>
+              <td style="font-weight: 600; color: #1a1a1a;">${escapeHtml(ac.compromiso)}</td>
+              <td style="color: #2b3034; font-weight: 600;">${escapeHtml(ac.responsable || 'Equipo convocante')}</td>
+              <td style="text-align: center; color: #004d32; font-weight: 700; white-space: nowrap;">${escapeHtml(ac.fechaCompromiso || '15 días hábiles')}</td>
             </tr>
           `).join('');
         }
-      }
-
-      // Conteo de firmantes
-      const totalFirmas = asistentes.filter(a => a.minutaId === m.id).length;
-      if (elemFirmantes) {
-        elemFirmantes.innerText = `👥 ${totalFirmas} asistente${totalFirmas === 1 ? '' : 's'} ha${totalFirmas === 1 ? '' : 'n'} firmado esta minuta hasta el momento.`;
       }
     }
 
@@ -2138,6 +2160,12 @@
     function alCambiarFiltroMinuta(minutaId) {
       filtroMinutaActivo = minutaId;
       actualizarTabla();
+      if (minutaId && minutaId !== 'TODAS') {
+        const m = minutas.find(item => item.id === minutaId);
+        if (m) actualizarAcuerdosDebajoLista(m);
+      } else {
+        actualizarAcuerdosDebajoLista(null);
+      }
     }
 
     // =========================================================================
