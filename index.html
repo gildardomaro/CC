@@ -4,9 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Coordinación de Competitividad en Sinaloa - Registro de Asistencia y Minuta</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <!-- Optimización DNS y Preconexión para redes móviles 4G/5G -->
+  <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+  <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+  <link rel="dns-prefetch" href="https://firestore.googleapis.com">
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <!-- Google Fonts no bloqueante -->
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap"></noscript>
   <style>
     :root {
       --imss-green: #006341;
@@ -1046,10 +1052,7 @@
     }
 
   </style>
-  <!-- Firebase SDKs Compat para sincronización en tiempo real desde GitHub Pages -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
 </head>
 <body>
 
@@ -1697,6 +1700,20 @@
     // =========================================================================
     // SINCRONIZACIÓN NATIVA CON FIRESTORE REST
     // =========================================================================
+        // Helper para timeout resiliente en redes móviles
+    async function fetchWithTimeout(url, options = {}, timeoutMs = 7000) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        const resp = await fetch(url, { ...options, signal: controller.signal });
+        clearTimeout(timer);
+        return resp;
+      } catch (err) {
+        clearTimeout(timer);
+        throw err;
+      }
+    }
+
     async function sincronizarConFirestoreREST(esManual = false) {
       if (estaSincronizando) return;
       if (typeof dibujando !== 'undefined' && dibujando) return;
@@ -1710,13 +1727,9 @@
       }
 
       try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 6000);
-        const res = await fetch(`${FIRESTORE_REST_BASE}?key=${firebaseConfig.apiKey}`, {
-          cache: 'no-store',
-          signal: controller.signal
-        });
-        clearTimeout(timeoutId);
+        const res = await fetchWithTimeout(`${FIRESTORE_REST_BASE}?key=${firebaseConfig.apiKey}`, {
+          cache: 'no-store'
+        }, 7000);
 
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
@@ -1773,7 +1786,7 @@
 
     function autoPublicarMinutasIniciales() {
       minutas.forEach(m => {
-        fetch(`${FIRESTORE_REST_BASE}/${m.id}?key=${firebaseConfig.apiKey}`, {
+        fetchWithTimeout(`${FIRESTORE_REST_BASE}/${m.id}?key=${firebaseConfig.apiKey}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(serializarDocFirestore(m))
@@ -1788,7 +1801,7 @@
         const pendientes = local.filter(a => a && a.id && !idsRemotos.has(String(a.id)));
 
         pendientes.forEach(asistente => {
-          fetch(`${FIRESTORE_REST_BASE}/${asistente.id}?key=${firebaseConfig.apiKey}`, {
+          fetchWithTimeout(`${FIRESTORE_REST_BASE}/${asistente.id}?key=${firebaseConfig.apiKey}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(serializarDocFirestore(asistente))
@@ -2083,7 +2096,7 @@
           const minutaEditada = minutas[idx];
           try { localStorage.setItem(MINUTAS_STORAGE_KEY, JSON.stringify(minutas)); } catch(e) {}
 
-          fetch(`${FIRESTORE_REST_BASE}/${minutaEnEdicionId}?key=${firebaseConfig.apiKey}`, {
+          fetchWithTimeout(`${FIRESTORE_REST_BASE}/${minutaEnEdicionId}?key=${firebaseConfig.apiKey}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(serializarDocFirestore(minutaEditada))
@@ -2125,7 +2138,7 @@
       minutas.unshift(nuevaMinuta);
       try { localStorage.setItem(MINUTAS_STORAGE_KEY, JSON.stringify(minutas)); } catch(e) {}
 
-      fetch(`${FIRESTORE_REST_BASE}/${nuevaMinuta.id}?key=${firebaseConfig.apiKey}`, {
+      fetchWithTimeout(`${FIRESTORE_REST_BASE}/${nuevaMinuta.id}?key=${firebaseConfig.apiKey}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(serializarDocFirestore(nuevaMinuta))
@@ -2233,7 +2246,7 @@
       minutas = minutas.filter(item => item.id !== minutaId);
       try { localStorage.setItem(MINUTAS_STORAGE_KEY, JSON.stringify(minutas)); } catch(e) {}
 
-      fetch(`${FIRESTORE_REST_BASE}/${minutaId}?key=${firebaseConfig.apiKey}`, {
+      fetchWithTimeout(`${FIRESTORE_REST_BASE}/${minutaId}?key=${firebaseConfig.apiKey}`, {
         method: 'DELETE'
       }).then(() => {
         console.log("Minuta eliminada de Firestore exitosamente");
@@ -2506,7 +2519,7 @@
       actualizarPreviewMinutaActual();
 
       // Transmitir a Firebase Cloud vía REST nativo
-      fetch(`${FIRESTORE_REST_BASE}/${nuevoAsistente.id}?key=${firebaseConfig.apiKey}`, {
+      fetchWithTimeout(`${FIRESTORE_REST_BASE}/${nuevoAsistente.id}?key=${firebaseConfig.apiKey}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(serializarDocFirestore(nuevoAsistente))
@@ -2701,7 +2714,7 @@
       if (confirm("¿Deseas retirar a este asistente de la reunión activa?\n\nNOTA: El registro permanecerá resguardado en el historial general.")) {
         asistentes = asistentes.filter(a => a.id !== id);
         try { localStorage.setItem(STORAGE_KEY, JSON.stringify(asistentes)); } catch(e) {}
-        fetch(`${FIRESTORE_REST_BASE}/${id}?key=${firebaseConfig.apiKey}`, {
+        fetchWithTimeout(`${FIRESTORE_REST_BASE}/${id}?key=${firebaseConfig.apiKey}`, {
           method: 'DELETE'
         }).catch(e => console.warn("Aviso eliminar REST:", e));
         actualizarTabla();
@@ -2830,7 +2843,7 @@
               ${rowsHtml}
             </tbody>
           </table>
-        </body>
+</body>
         </html>
       `;
 
@@ -3326,5 +3339,13 @@
     </div>
   </div>
 
+  <!-- Service Worker para PWA y Resiliencia Móvil -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+      });
+    }
+  </script>
 </body>
 </html>
